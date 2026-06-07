@@ -477,9 +477,9 @@ func archiveHandler(c *gin.Context) {
 func main() {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:5173", "http://localhost:3000", "http://localhost:5174"},
-		AllowMethods: []string{"GET", "POST", "OPTIONS"},
-		AllowHeaders: []string{"Origin", "Content-Type", "Accept"},
+		AllowAllOrigins: true, // THIS IS THE MAGIC FIX FOR VERCEL
+		AllowMethods:    []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:    []string{"Origin", "Content-Type", "Accept"},
 	}))
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "Kabbo.Lens alive 🎞️"})
