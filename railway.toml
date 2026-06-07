@@ -1,0 +1,6 @@
+[build]
+rootDirectory = "backend"
+
+[deploy]
+startCommand = "go run main.go"
+healthcheckPath = "/health"
