@@ -2,5 +2,5 @@
 rootDirectory = "backend"
 
 [deploy]
-startCommand = "go run main.go"
+startCommand = "./out"
 healthcheckPath = "/health"
