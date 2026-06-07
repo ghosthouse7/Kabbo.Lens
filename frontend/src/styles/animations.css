@@ -1,0 +1,120 @@
+/* ─── KEYFRAMES ───────────────────────────────────────────────── */
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes filmReveal {
+  from {
+    opacity: 0;
+    transform: scale(1.08);
+    filter: blur(14px) brightness(1.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) brightness(1);
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.9);  opacity: 1; }
+  100% { transform: scale(1.8);  opacity: 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50%       { transform: translateY(-20px) scale(1.02); }
+}
+
+@keyframes orb-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(30px, -20px) scale(1.05); }
+  66%       { transform: translate(-20px, 15px) scale(0.97); }
+}
+
+@keyframes grain-drift {
+  0%, 100% { transform: translate(0, 0); }
+  25%       { transform: translate(-1px, 1px); }
+  50%       { transform: translate(1px, -1px); }
+  75%       { transform: translate(-1px, -1px); }
+}
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.5); opacity: 0.6; }
+  50%       { transform: scaleY(1.4); opacity: 1; }
+}
+
+@keyframes typewriter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scanline {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(100vh); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(214,179,106,0.08),
+                inset 0 0 20px rgba(214,179,106,0.02);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(214,179,106,0.18),
+                inset 0 0 30px rgba(214,179,106,0.05);
+  }
+}
+
+/* ─── UTILITY CLASSES ─────────────────────────────────────────── */
+
+.anim-fade-up      { animation: fadeUp    0.55s cubic-bezier(0.4,0,0.2,1) both; }
+.anim-fade-in      { animation: fadeIn    0.4s  ease both; }
+.anim-slide-right  { animation: slideRight 0.45s cubic-bezier(0.4,0,0.2,1) both; }
+.anim-film-reveal  { animation: filmReveal 0.7s  cubic-bezier(0.4,0,0.2,1) both; }
+
+.delay-1  { animation-delay: 0.08s; }
+.delay-2  { animation-delay: 0.16s; }
+.delay-3  { animation-delay: 0.24s; }
+.delay-4  { animation-delay: 0.32s; }
+.delay-5  { animation-delay: 0.40s; }
+.delay-6  { animation-delay: 0.50s; }
+
+.glow-pulse { animation: glow-pulse 3.5s ease-in-out infinite; }
+
+/* ─── INTERACTIVE STATES ──────────────────────────────────────── */
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+
+.hover-gold:hover { color: var(--gold) !important; }
+
+/* ─── PAGE TRANSITION ─────────────────────────────────────────── */
+.page-enter {
+  animation: fadeUp 0.4s cubic-bezier(0.4,0,0.2,1) both;
+}
