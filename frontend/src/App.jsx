@@ -11,7 +11,7 @@ import ResultPanel    from './components/ResultPanel';
 import HeritageMap    from './components/HeritageMap';
 import ArchiveGrid    from './components/ArchiveGrid';
 
-const BACKEND = '[https://kabbolens-production.up.railway.app](https://kabbolens-production.up.railway.app)';
+const BACKEND = 'https://kabbolens-production.up.railway.app';
 
 const OUTPUT_TYPES = [
   { id: 'script',     icon: '🎬', label: 'Film Script',   desc: 'Cinematic indie screenplay' },

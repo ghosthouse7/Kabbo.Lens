@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback } from 'react';
 
-const BACKEND = '[https://kabbolens-production.up.railway.app](https://kabbolens-production.up.railway.app)';
+const BACKEND ='https://kabbolens-production.up.railway.app';
 
 // Web Audio fallback — generates synthetic sound when ElevenLabs is unavailable
 function createFallbackEngine() {
