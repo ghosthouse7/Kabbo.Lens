@@ -7,84 +7,77 @@ export default function Navbar({ tab, setTab }) {
 
   return (
     <nav style={{
-      position: 'sticky',
-      top: 0,
-      zIndex: 100,
+      position: 'sticky', top: 0, zIndex: 100,
       borderBottom: '1px solid var(--border)',
-      background: 'rgba(9,8,10,0.92)',
+      background: 'rgba(9,8,10,0.88)',
       backdropFilter: 'blur(16px)',
       WebkitBackdropFilter: 'blur(16px)',
     }}>
       <div style={{
-        maxWidth: '1240px',
-        margin: '0 auto',
+        maxWidth: '1240px', margin: '0 auto',
         padding: '0 32px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        height: '58px',
+        display: 'flex', alignItems: 'center',
+        height: '60px', gap: '40px',
       }}>
 
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          {/* Film perforations */}
-          <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
-            {[0,1,2,3,4].map(i => (
-              <div key={i} style={{
-                width: '5px',
-                height: '8px',
-                borderRadius: '1px',
-                background: i % 2 === 0 ? 'rgba(214,179,106,0.5)' : 'rgba(214,179,106,0.2)',
-                border: '1px solid rgba(214,179,106,0.3)',
-              }} />
-            ))}
-          </div>
-
-          <span style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 300, letterSpacing: '-0.02em', lineHeight: 1 }}>
-            <span style={{ color: 'var(--gold)', fontStyle: 'italic' }}>Kabbo</span>
-            <span style={{ color: 'rgba(244,239,228,0.2)' }}>.</span>
-            <span style={{ color: 'var(--cream)' }}>Lens</span>
-          </span>
-
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          {/* Mini reel */}
+          <svg width="22" height="22" viewBox="0 0 22 22" style={{ flexShrink: 0 }}>
+            <circle cx="11" cy="11" r="9" stroke="rgba(212,168,75,0.3)" strokeWidth="1" fill="rgba(212,168,75,0.05)"/>
+            <circle cx="11" cy="11" r="9" stroke="var(--gold)" strokeWidth="1" fill="none"
+              strokeDasharray="8 49" strokeLinecap="round"/>
+            <circle cx="11" cy="11" r="3" fill="rgba(212,168,75,0.2)"/>
+            <circle cx="11" cy="11" r="1.5" fill="var(--gold)"/>
+          </svg>
           <span style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '8px',
-            letterSpacing: '0.3em',
-            textTransform: 'uppercase',
-            color: 'rgba(214,179,106,0.3)',
-            borderLeft: '1px solid var(--border)',
-            paddingLeft: '14px',
-            marginLeft: '2px',
+            fontFamily: 'var(--font-cinzel)',
+            fontSize: '16px',
+            fontWeight: 400,
+            letterSpacing: '0.08em',
+            color: 'var(--cream)',
           }}>
-            Cultural Memory Engine
+            Kabbo<span style={{ color: 'var(--gold)', fontStyle: 'italic' }}>.Lens</span>
           </span>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '2px' }}>
+        <div style={{ display: 'flex', gap: '2px', flex: 1 }}>
           {tabs.map(t => (
             <button
               key={t.id}
-              className={`btn btn-tab mono${tab === t.id ? ' active' : ''}`}
               onClick={() => setTab(t.id)}
+              className="btn"
+              style={{
+                fontSize: '8px',
+                letterSpacing: '0.2em',
+                padding: '7px 16px',
+                borderColor: tab === t.id ? 'var(--border-mid)' : 'transparent',
+                color: tab === t.id ? 'var(--gold)' : 'var(--ash)',
+                background: tab === t.id ? 'var(--gold-faint)' : 'transparent',
+              }}
             >
               {t.label}
             </button>
           ))}
         </div>
 
-        {/* Right — hackathon badge */}
+        {/* Status pill */}
         <div style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '8px',
-          letterSpacing: '0.25em',
-          textTransform: 'uppercase',
-          color: 'rgba(214,179,106,0.25)',
+          display: 'flex', alignItems: 'center', gap: '6px',
+          padding: '5px 10px',
           border: '1px solid var(--border)',
           borderRadius: 'var(--radius-sm)',
-          padding: '4px 10px',
+          background: 'var(--bg-1)',
         }}>
-          Tradition Hacks 2026
+          <div style={{
+            width: '5px', height: '5px', borderRadius: '50%',
+            background: 'var(--green)',
+            boxShadow: '0 0 6px rgba(74,140,106,0.5)',
+          }} />
+          <span className="mono" style={{ fontSize: '8px', color: 'var(--ash)', letterSpacing: '0.1em' }}>
+            Live
+          </span>
         </div>
       </div>
     </nav>

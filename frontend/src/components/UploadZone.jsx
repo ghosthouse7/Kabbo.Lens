@@ -1,143 +1,168 @@
-import { useRef, useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 const FILM_ERAS = [
-  { id: 'none',   label: 'Original',    filter: 'none' },
-  { id: '1960s',  label: 'Ray Era',     filter: 'sepia(0.75) contrast(1.15) brightness(0.88) saturate(0.5)' },
-  { id: '1970s',  label: 'Eastmancolor',filter: 'sepia(0.25) hue-rotate(12deg) saturate(1.4) contrast(1.1) brightness(0.92)' },
-  { id: '1990s',  label: 'VHS Grain',   filter: 'contrast(1.35) saturate(0.65) brightness(0.93) hue-rotate(-8deg)' },
-  { id: 'modern', label: 'Modern',      filter: 'contrast(1.06) saturate(1.15) brightness(1.02)' },
+  { id: 'none',  label: 'Original',  filter: 'none' },
+  { id: '1960s', label: 'Ray Era',   filter: 'sepia(0.75) contrast(1.15) brightness(0.88) saturate(0.7)' },
+  { id: '1970s', label: '70s Grain', filter: 'sepia(0.4) contrast(1.2) brightness(0.82) saturate(0.5) hue-rotate(5deg)' },
+  { id: '1990s', label: '90s Fade',  filter: 'sepia(0.2) contrast(0.95) brightness(1.05) saturate(0.75)' },
+  { id: 'bw',    label: 'B&W',       filter: 'grayscale(1) contrast(1.1) brightness(0.9)' },
 ];
 
 export default function UploadZone({ image, onFile, era, setEra }) {
-  const fileRef = useRef(null);
   const [dragging, setDragging] = useState(false);
 
   const handleFile = useCallback((file) => {
-    if (!file?.type.startsWith('image/')) return;
-    onFile({ file, url: URL.createObjectURL(file) });
+    if (!file || !file.type.startsWith('image/')) return;
+    const url = URL.createObjectURL(file);
+    onFile({ file, url, name: file.name });
   }, [onFile]);
 
-  const filmFilter = FILM_ERAS.find(e => e.id === era)?.filter || 'none';
+  const onDrop = useCallback((e) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files[0];
+    handleFile(file);
+  }, [handleFile]);
+
+  const currentFilter = FILM_ERAS.find(f => f.id === era)?.filter || 'none';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-
-      {/* Section label */}
-      <div className="label">01 — Upload Frame</div>
+    <div>
+      <div className="label" style={{ marginBottom: '12px' }}>01 — Source Image</div>
 
       {/* Drop zone */}
       <div
-        onClick={() => !image && fileRef.current?.click()}
-        onDrop={e => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
         onDragOver={e => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+        onClick={() => !image && document.getElementById('kl-file-input').click()}
         style={{
-          border: `1px dashed ${dragging ? 'var(--gold)' : image ? 'var(--border-mid)' : 'var(--border)'}`,
+          position: 'relative',
+          border: `1px ${dragging ? 'solid' : 'dashed'} ${dragging ? 'var(--border-hi)' : image ? 'var(--border-mid)' : 'var(--border)'}`,
           borderRadius: 'var(--radius-lg)',
+          background: dragging ? 'rgba(212,168,75,0.06)' : image ? 'transparent' : 'rgba(212,168,75,0.01)',
           overflow: 'hidden',
-          minHeight: image ? 0 : '200px',
+          transition: 'var(--transition)',
+          cursor: image ? 'default' : 'pointer',
+          minHeight: image ? 'auto' : '200px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: image ? 'default' : 'pointer',
-          background: dragging ? 'rgba(214,179,106,0.03)' : 'var(--bg-1)',
-          transition: 'all 0.3s ease',
-          position: 'relative',
         }}
       >
         {image ? (
-          /* Film frame wrapper */
-          <div className="film-frame" style={{ width: '100%', position: 'relative' }}>
+          <>
+            {/* Film reel strips */}
+            <div style={{
+              position: 'absolute', left: 0, top: 0, bottom: 0, width: '22px',
+              background: 'rgba(0,0,0,0.7)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              gap: '4px', paddingTop: '6px', zIndex: 2,
+            }}>
+              {Array.from({ length: 14 }).map((_, i) => (
+                <div key={i} style={{
+                  width: '12px', height: '10px', flexShrink: 0,
+                  background: 'rgba(212,168,75,0.12)',
+                  borderRadius: '1px',
+                  border: '1px solid rgba(212,168,75,0.1)',
+                }} />
+              ))}
+            </div>
+            <div style={{
+              position: 'absolute', right: 0, top: 0, bottom: 0, width: '22px',
+              background: 'rgba(0,0,0,0.7)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              gap: '4px', paddingTop: '6px', zIndex: 2,
+            }}>
+              {Array.from({ length: 14 }).map((_, i) => (
+                <div key={i} style={{
+                  width: '12px', height: '10px', flexShrink: 0,
+                  background: 'rgba(212,168,75,0.12)',
+                  borderRadius: '1px',
+                  border: '1px solid rgba(212,168,75,0.1)',
+                }} />
+              ))}
+            </div>
+
+            {/* Image */}
             <img
               src={image.url}
-              alt="Uploaded frame"
-              className="anim-film-reveal"
+              alt="Uploaded"
               style={{
-                width: '100%',
-                maxHeight: '300px',
+                width: '100%', maxHeight: '280px',
                 objectFit: 'cover',
                 display: 'block',
-                filter: filmFilter,
-                transition: 'filter 0.7s ease',
-                marginLeft: '18px',
-                marginRight: '18px',
-                width: 'calc(100% - 36px)',
+                filter: currentFilter,
+                transition: 'filter 0.4s ease',
               }}
             />
-            {/* Bottom vignette */}
-            <div style={{
-              position: 'absolute',
-              bottom: 0, left: 0, right: 0,
-              height: '80px',
-              background: 'linear-gradient(to top, rgba(9,8,10,0.9), transparent)',
-              pointerEvents: 'none',
-              zIndex: 3,
-            }} />
-            {/* Change button */}
+
+            {/* Change button overlay */}
             <button
-              className="btn btn-ghost"
-              onClick={e => { e.stopPropagation(); fileRef.current?.click(); }}
+              onClick={(e) => { e.stopPropagation(); document.getElementById('kl-file-input').click(); }}
+              className="btn"
               style={{
-                position: 'absolute',
-                top: '10px',
-                right: '28px',
-                zIndex: 4,
-                background: 'rgba(9,8,10,0.85)',
-                fontSize: '8px',
-                letterSpacing: '0.2em',
+                position: 'absolute', bottom: '12px', right: '30px', zIndex: 3,
+                background: 'rgba(9,8,10,0.8)',
+                backdropFilter: 'blur(8px)',
+                fontSize: '7px', letterSpacing: '0.18em',
               }}
             >
-              ↻ Change
+              Change
             </button>
-          </div>
+          </>
         ) : (
-          <div style={{ textAlign: 'center', padding: '52px 32px' }}>
-            {/* Film reel icon */}
-            <div style={{ marginBottom: '16px', opacity: 0.18 }}>
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="1.5"/>
-                <circle cx="24" cy="24" r="8" stroke="currentColor" strokeWidth="1.5"/>
-                <circle cx="24" cy="10" r="3" fill="currentColor" opacity="0.6"/>
-                <circle cx="24" cy="38" r="3" fill="currentColor" opacity="0.6"/>
-                <circle cx="10" cy="24" r="3" fill="currentColor" opacity="0.6"/>
-                <circle cx="38" cy="24" r="3" fill="currentColor" opacity="0.6"/>
-                <circle cx="24" cy="24" r="2.5" fill="currentColor"/>
-              </svg>
-            </div>
-            <div className="mono" style={{ fontSize: '12px', color: 'var(--cream-faint)', marginBottom: '6px' }}>
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <svg width="40" height="40" viewBox="0 0 40 40" style={{ marginBottom: '14px', opacity: 0.3 }}>
+              <rect x="4" y="8" width="32" height="24" rx="2" stroke="var(--gold)" strokeWidth="1.5" fill="none"/>
+              <circle cx="14" cy="16" r="3" stroke="var(--gold)" strokeWidth="1.5" fill="none"/>
+              <path d="M4 26l8-7 6 5 5-4 13 9" stroke="var(--gold)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+              {/* Perforations */}
+              <rect x="1" y="12" width="3" height="5" rx="0.5" fill="var(--gold)" opacity="0.4"/>
+              <rect x="1" y="20" width="3" height="5" rx="0.5" fill="var(--gold)" opacity="0.4"/>
+              <rect x="36" y="12" width="3" height="5" rx="0.5" fill="var(--gold)" opacity="0.4"/>
+              <rect x="36" y="20" width="3" height="5" rx="0.5" fill="var(--gold)" opacity="0.4"/>
+            </svg>
+            <div style={{
+              fontFamily: 'var(--font-display)',
+              fontStyle: 'italic',
+              fontWeight: 300,
+              fontSize: '16px',
+              color: 'var(--cream-faint)',
+              marginBottom: '6px',
+            }}>
               Drop a Kolkata photograph
             </div>
-            <div className="label" style={{ fontSize: '8px', opacity: 0.5 }}>JPG · PNG · WEBP</div>
+            <div className="label" style={{ fontSize: '7px' }}>
+              or click to browse · jpg, png, webp
+            </div>
           </div>
         )}
       </div>
+
       <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
+        id="kl-file-input" type="file" accept="image/*"
         style={{ display: 'none' }}
-        onChange={e => handleFile(e.target.files?.[0])}
+        onChange={e => handleFile(e.target.files[0])}
       />
 
-      {/* Film Era Filter */}
+      {/* Film era filter */}
       {image && (
-        <div>
-          <div className="label" style={{ marginBottom: '10px' }}>Film Era Filter</div>
+        <div style={{ marginTop: '14px' }}>
+          <div className="label" style={{ marginBottom: '10px', fontSize: '7px' }}>Film Era Filter</div>
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {FILM_ERAS.map(f => (
               <button
                 key={f.id}
-                className="btn mono"
+                className="btn"
                 onClick={() => setEra(f.id)}
                 style={{
-                  padding: '6px 14px',
-                  border: `1px solid ${era === f.id ? 'var(--border-hi)' : 'var(--border)'}`,
-                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '7px',
+                  padding: '5px 10px',
+                  letterSpacing: '0.12em',
+                  borderColor: era === f.id ? 'var(--border-mid)' : 'var(--border)',
+                  color: era === f.id ? 'var(--gold)' : 'var(--ash)',
                   background: era === f.id ? 'var(--gold-faint)' : 'transparent',
-                  color: era === f.id ? 'var(--gold)' : 'var(--cream-faint)',
-                  fontSize: '10px',
-                  letterSpacing: '0.05em',
-                  transition: 'var(--transition)',
                 }}
               >
                 {f.label}

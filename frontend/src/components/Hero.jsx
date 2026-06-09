@@ -1,88 +1,47 @@
 export default function Hero() {
-  const features = [
-    'Vision AI', 'Film Grain', 'Heritage Map',
-    'Miro Boards', 'PDF Zine', 'Sound Layer',
-  ];
-
   return (
     <div style={{
-      padding: '80px 32px 64px',
       textAlign: 'center',
-      borderBottom: '1px solid var(--border)',
-      background: 'radial-gradient(ellipse 70% 60% at 50% -10%, rgba(214,179,106,0.05) 0%, transparent 70%)',
-      position: 'relative',
-      overflow: 'hidden',
+      padding: '56px 32px 32px',
+      position: 'relative', zIndex: 1,
     }}>
-
-      {/* Decorative horizontal rule top */}
-      <div style={{
-        position: 'absolute',
-        top: '28px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        opacity: 0.35,
-      }}>
-        <div style={{ width: '40px', height: '1px', background: 'var(--gold)' }} />
-        <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--gold)' }} />
-        <div style={{ width: '40px', height: '1px', background: 'var(--gold)' }} />
+      <div className="label" style={{ marginBottom: '14px', fontSize: '7px', letterSpacing: '0.4em' }}>
+        Kolkata · 1947 – Present · Cultural Memory Engine
       </div>
-
-      {/* Eyebrow */}
-      <div className="label anim-fade-up" style={{ marginBottom: '22px' }}>
-        Generative AI · Cultural Preservation · Kolkata
-      </div>
-
-      {/* Headline */}
-      <h1 className="anim-fade-up delay-1" style={{
+      <h1 style={{
         fontFamily: 'var(--font-display)',
+        fontStyle: 'italic',
         fontWeight: 300,
-        fontSize: 'clamp(44px, 6.5vw, 82px)',
-        letterSpacing: '-0.04em',
-        lineHeight: 1.03,
-        marginBottom: '20px',
+        fontSize: 'clamp(28px, 4vw, 48px)',
         color: 'var(--cream)',
+        lineHeight: 1.2,
+        letterSpacing: '-0.01em',
+        marginBottom: '10px',
       }}>
-        Every Photograph<br />
-        <span style={{ fontStyle: 'italic', color: 'var(--gold)' }}>
-          Contains a Forgotten Story.
-        </span>
+        Every photograph holds a story<br />
+        <span style={{ color: 'var(--gold)' }}>waiting to be told.</span>
       </h1>
-
-      {/* Subheading */}
-      <p className="mono anim-fade-up delay-2" style={{
-        fontSize: '12px',
-        color: 'var(--cream-faint)',
-        letterSpacing: '0.04em',
-        lineHeight: 1.9,
-        maxWidth: '500px',
-        margin: '0 auto 36px',
-      }}>
-        Upload a Kolkata photograph. AI decodes its visual DNA and generates<br />
-        film scripts, Bengali poetry, soundscapes — rooted in the city's soul.
+      <p className="mono" style={{ fontSize: '10px', color: 'var(--ash)', letterSpacing: '0.08em' }}>
+        Upload an image · Choose your form · Watch Kolkata speak
       </p>
 
-      {/* Feature pills */}
-      <div className="anim-fade-up delay-3" style={{
-        display: 'flex',
-        gap: '8px',
-        justifyContent: 'center',
-        flexWrap: 'wrap',
-      }}>
-        {features.map((f, i) => (
-          <span key={i} className="tag" style={{ animationDelay: `${0.3 + i * 0.05}s` }}>{f}</span>
-        ))}
-      </div>
-
-      {/* Decorative bottom film strip */}
+      {/* Decorative rule */}
       <div style={{
-        position: 'absolute',
-        bottom: 0, left: 0, right: 0,
-        height: '3px',
-        background: 'repeating-linear-gradient(90deg, transparent 0px 10px, rgba(214,179,106,0.2) 10px 20px)',
-      }} />
+        display: 'flex', alignItems: 'center', gap: '12px',
+        maxWidth: '320px', margin: '22px auto 0',
+      }}>
+        <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, transparent, var(--border))' }} />
+        <div style={{ display: 'flex', gap: '3px' }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} style={{
+              width: '6px', height: '8px', borderRadius: '1px',
+              background: i % 2 === 0 ? 'rgba(212,168,75,0.15)' : 'transparent',
+              border: '1px solid rgba(212,168,75,0.08)',
+            }} />
+          ))}
+        </div>
+        <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, var(--border), transparent)' }} />
+      </div>
     </div>
   );
 }

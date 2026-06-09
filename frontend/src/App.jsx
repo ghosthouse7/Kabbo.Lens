@@ -1,9 +1,8 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-
+import { useState, useCallback, useEffect } from 'react';
 import './styles/globals.css';
-import './styles/animations.css';
 
 import FloatingOrbs   from './components/FloatingOrbs';
+import LandingPage    from './components/LandingPage';
 import Navbar         from './components/Navbar';
 import Hero           from './components/Hero';
 import UploadZone     from './components/UploadZone';
@@ -11,12 +10,43 @@ import ResultPanel    from './components/ResultPanel';
 import HeritageMap    from './components/HeritageMap';
 import ArchiveGrid    from './components/ArchiveGrid';
 
-const BACKEND = 'https://kabbolens-production.up.railway.app';
+const BACKEND = 'http://localhost:8080';
+
+// ─── Refined SVG Icons for Output Types ────────────────────────────────────────
+const ScriptIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+    <line x1="7" y1="2" x2="7" y2="22"></line>
+    <line x1="17" y1="2" x2="17" y2="22"></line>
+    <line x1="2" y1="12" x2="22" y2="12"></line>
+    <line x1="2" y1="7" x2="7" y2="7"></line>
+    <line x1="2" y1="17" x2="7" y2="17"></line>
+    <line x1="17" y1="17" x2="22" y2="17"></line>
+    <line x1="17" y1="7" x2="22" y2="7"></line>
+  </svg>
+);
+
+const PoemIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+    <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+    <path d="M2 2l7.586 7.586"></path>
+    <circle cx="11" cy="11" r="2"></circle>
+  </svg>
+);
+
+const StoryboardIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+    <polyline points="21 15 16 10 5 21"></polyline>
+  </svg>
+);
 
 const OUTPUT_TYPES = [
-  { id: 'script',     icon: '🎬', label: 'Film Script',   desc: 'Cinematic indie screenplay' },
-  { id: 'poem',       icon: '✒️',  label: 'Kavita',        desc: 'Jibanananda-inspired verse' },
-  { id: 'storyboard', icon: '🎞️', label: 'Storyboard',    desc: "Director's shot breakdown" },
+  { id: 'script',     icon: <ScriptIcon />,     label: 'Film Script',  desc: 'Cinematic indie screenplay' },
+  { id: 'poem',       icon: <PoemIcon />,       label: 'Kavita',       desc: 'Jibanananda-inspired verse' },
+  { id: 'storyboard', icon: <StoryboardIcon />, label: 'Storyboard',   desc: "Director's shot breakdown" },
 ];
 
 const LANGUAGES = [
@@ -26,31 +56,28 @@ const LANGUAGES = [
 ];
 
 export default function KabboLens() {
-  const [tab,        setTab]    = useState('studio');
-  const [image,      setImage]  = useState(null);
-  const [outputType, setOT]     = useState('script');
-  const [language,   setLang]   = useState('bilingual');
-  const [era,        setEra]    = useState('none');
-  const [result,     setResult] = useState(null);
-  const [archive,    setArchive]= useState([]);
-  const [mapPins,    setMapPins]= useState([]);
-  const [loading,    setLoading]= useState(false);
-  const [error,      setError]  = useState(null);
+  const [entered,    setEntered]  = useState(false);
+  const [tab,        setTab]      = useState('studio');
+  const [image,      setImage]    = useState(null);
+  const [outputType, setOT]       = useState('script');
+  const [language,   setLang]     = useState('bilingual');
+  const [era,        setEra]      = useState('none');
+  const [result,     setResult]   = useState(null);
+  const [archive,    setArchive]  = useState([]);
+  const [mapPins,    setMapPins]  = useState([]);
+  const [loading,    setLoading]  = useState(false);
+  const [error,      setError]    = useState(null);
 
   // Load archive on mount
   useEffect(() => {
     fetch(`${BACKEND}/api/archive`)
       .then(r => r.json())
-      .then(d => {
-        if (d.entries) { setMapPins(d.entries); setArchive(d.entries); }
-      })
+      .then(d => { if (d.entries) { setMapPins(d.entries); setArchive(d.entries); } })
       .catch(() => {});
   }, []);
 
   const handleFile = useCallback((fileObj) => {
-    setImage(fileObj);
-    setResult(null);
-    setError(null);
+    setImage(fileObj); setResult(null); setError(null);
   }, []);
 
   const generate = async () => {
@@ -79,80 +106,67 @@ export default function KabboLens() {
     }
   };
 
+  // ── Landing page ──
+  if (!entered) return <LandingPage onEnter={() => setEntered(true)} />;
+
+  // ── Main app ──
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--cream-dim)', position: 'relative' }}>
-
-      {/* Ambient background */}
+    <div style={{ minHeight: '100vh', background: 'var(--ink)', color: 'var(--cream)', position: 'relative' }}>
       <FloatingOrbs />
-
-      {/* Sticky nav */}
       <Navbar tab={tab} setTab={setTab} />
 
-      {/* Main content */}
       <div style={{ position: 'relative', zIndex: 1 }}>
 
         {/* ── STUDIO ── */}
         {tab === 'studio' && (
           <>
-            {/* Hero — only when no result yet */}
             {!result && !loading && <Hero />}
-
-            <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '40px 32px 80px' }}>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)',
-                gap: '36px',
-              }}
+            <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '32px 32px 80px' }}>
+              <div
                 className="studio-grid"
+                style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: '32px' }}
               >
-                {/* ── LEFT: Controls ── */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+                {/* LEFT COLUMN */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
                   {/* Upload */}
-                  <UploadZone
-                    image={image}
-                    onFile={handleFile}
-                    era={era}
-                    setEra={setEra}
-                  />
+                  <UploadZone image={image} onFile={handleFile} era={era} setEra={setEra} />
 
                   {/* Output type */}
                   <div>
-                    <div className="label" style={{ marginBottom: '12px' }}>02 — Creative Output</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div className="label" style={{ marginBottom: '10px' }}>02 — Creative Output</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {OUTPUT_TYPES.map(t => (
                         <div
                           key={t.id}
                           onClick={() => setOT(t.id)}
+                          className="hover-lift"
                           style={{
-                            padding: '14px 16px',
+                            padding: '12px 14px',
                             border: `1px solid ${outputType === t.id ? 'var(--border-mid)' : 'var(--border)'}`,
                             borderRadius: 'var(--radius)',
                             background: outputType === t.id ? 'var(--gold-faint)' : 'var(--bg-1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '14px',
-                            cursor: 'pointer',
-                            transition: 'var(--transition)',
+                            display: 'flex', alignItems: 'center', gap: '12px',
+                            cursor: 'pointer', transition: 'var(--transition)',
                           }}
-                          className="hover-lift"
                         >
-                          <span style={{ fontSize: '20px' }}>{t.icon}</span>
+                          <span style={{ flexShrink: 0, color: outputType === t.id ? 'var(--gold)' : 'var(--ash)' }}>
+                            {t.icon}
+                          </span>
                           <div style={{ flex: 1 }}>
                             <div style={{
                               fontFamily: 'var(--font-display)',
-                              fontSize: '15px',
                               fontStyle: outputType === t.id ? 'italic' : 'normal',
+                              fontSize: '14px', fontWeight: 300,
                               color: outputType === t.id ? 'var(--gold)' : 'var(--cream)',
-                              fontWeight: 300,
-                              marginBottom: '2px',
+                              marginBottom: '1px',
                             }}>
                               {t.label}
                             </div>
-                            <div className="label" style={{ fontSize: '8px', opacity: 0.6 }}>{t.desc}</div>
+                            <div className="label" style={{ fontSize: '7px', opacity: 0.5 }}>{t.desc}</div>
                           </div>
                           {outputType === t.id && (
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--gold)', flexShrink: 0 }} />
+                            <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--gold)', flexShrink: 0 }} />
                           )}
                         </div>
                       ))}
@@ -161,23 +175,19 @@ export default function KabboLens() {
 
                   {/* Language */}
                   <div>
-                    <div className="label" style={{ marginBottom: '12px' }}>03 — Language</div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="label" style={{ marginBottom: '10px' }}>03 — Language</div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
                       {LANGUAGES.map(l => (
                         <button
                           key={l.id}
-                          className="btn mono"
+                          className="btn"
                           onClick={() => setLang(l.id)}
                           style={{
-                            flex: 1,
-                            padding: '10px',
-                            border: `1px solid ${language === l.id ? 'var(--border-hi)' : 'var(--border)'}`,
-                            borderRadius: 'var(--radius-sm)',
-                            background: language === l.id ? 'var(--gold-faint)' : 'var(--bg-1)',
-                            color: language === l.id ? 'var(--gold)' : 'var(--cream-faint)',
-                            fontSize: '11px',
-                            letterSpacing: '0.05em',
-                            transition: 'var(--transition)',
+                            flex: 1, padding: '9px 6px', justifyContent: 'center',
+                            fontSize: '10px', letterSpacing: '0.04em',
+                            borderColor: language === l.id ? 'var(--border-hi)' : 'var(--border)',
+                            color: language === l.id ? 'var(--gold)' : 'var(--ash)',
+                            background: language === l.id ? 'var(--gold-faint)' : 'transparent',
                           }}
                         >
                           {l.label}
@@ -191,12 +201,13 @@ export default function KabboLens() {
                     className={`btn btn-primary${image && !loading ? ' glow-pulse' : ''}`}
                     onClick={generate}
                     disabled={!image || loading}
-                    style={{ width: '100%', padding: '16px', fontSize: '10px', letterSpacing: '0.28em' }}
+                    style={{ width: '100%', padding: '15px', fontSize: '9px', letterSpacing: '0.28em', justifyContent: 'center' }}
                   >
                     {loading ? (
                       <>
-                        <svg width="14" height="14" viewBox="0 0 14 14" style={{ animation: 'spin 1.2s linear infinite', flexShrink: 0 }}>
-                          <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeDasharray="10 24" strokeLinecap="round" />
+                        <svg width="12" height="12" viewBox="0 0 14 14" style={{ animation: 'spin 1.2s linear infinite', flexShrink: 0 }}>
+                          <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5"
+                            fill="none" strokeDasharray="10 24" strokeLinecap="round"/>
                         </svg>
                         Developing Frame…
                       </>
@@ -206,27 +217,20 @@ export default function KabboLens() {
                   {/* Error */}
                   {error && (
                     <div className="mono" style={{
-                      padding: '12px 16px',
-                      border: '1px solid rgba(192,57,43,0.3)',
+                      padding: '10px 14px',
+                      border: '1px solid rgba(201,64,64,0.3)',
                       borderRadius: 'var(--radius-sm)',
-                      background: 'rgba(192,57,43,0.05)',
-                      color: '#e74c3c',
-                      fontSize: '11px',
+                      background: 'rgba(201,64,64,0.05)',
+                      color: 'var(--red)', fontSize: '10px',
                     }}>
                       ✕ {error}
                     </div>
                   )}
                 </div>
 
-                {/* ── RIGHT: Result ── */}
+                {/* RIGHT COLUMN */}
                 <div>
-                  <ResultPanel
-                    result={result}
-                    loading={loading}
-                    image={image}
-                    era={era}
-                    onTabChange={setTab}
-                  />
+                  <ResultPanel result={result} loading={loading} image={image} era={era} onTabChange={setTab} />
                 </div>
               </div>
             </div>
@@ -235,14 +239,14 @@ export default function KabboLens() {
 
         {/* ── MAP ── */}
         {tab === 'map' && (
-          <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '40px 32px 80px' }}>
+          <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '32px 32px 80px' }}>
             <HeritageMap mapPins={mapPins} />
           </div>
         )}
 
         {/* ── ARCHIVE ── */}
         {tab === 'archive' && (
-          <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '40px 32px 80px' }}>
+          <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '32px 32px 80px' }}>
             <ArchiveGrid archive={archive} />
           </div>
         )}
@@ -250,73 +254,36 @@ export default function KabboLens() {
 
       {/* Footer */}
       <footer style={{
-        borderTop: '1px solid var(--border)',
-        padding: '28px 32px',
-        position: 'relative',
-        zIndex: 1,
+        borderTop: '1px solid var(--border)', padding: '24px 32px',
+        position: 'relative', zIndex: 1,
       }}>
         <div style={{
-          maxWidth: '1240px',
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '12px',
+          maxWidth: '1240px', margin: '0 auto',
+          display: 'flex', justifyContent: 'space-between',
+          alignItems: 'center', flexWrap: 'wrap', gap: '12px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: '15px', color: 'var(--gold)', fontStyle: 'italic' }}>
-              Kabbo.Lens
+            <span style={{ fontFamily: 'var(--font-cinzel)', fontSize: '14px', color: 'var(--gold)', letterSpacing: '0.06em' }}>
+              Kabbo<span style={{ fontStyle: 'italic' }}>.Lens</span>
             </span>
-            <span className="label" style={{ fontSize: '7px', borderLeft: '1px solid var(--border)', paddingLeft: '10px' }}>
+            <span className="label" style={{ fontSize: '6px', borderLeft: '1px solid var(--border)', paddingLeft: '10px' }}>
               Cultural Memory Engine
             </span>
           </div>
-          <div className="label" style={{ fontSize: '8px', opacity: 0.3 }}>
+          <div className="label" style={{ fontSize: '7px', opacity: 0.25 }}>
             Kolkata's stories, frame by frame · Tradition Hacks 2026
           </div>
-          {/* Film strip decoration */}
           <div style={{ display: 'flex', gap: '3px' }}>
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} style={{
-                width: '8px', height: '12px',
-                borderRadius: '1px',
-                background: i % 2 === 0 ? 'rgba(214,179,106,0.15)' : 'transparent',
-                border: '1px solid rgba(214,179,106,0.1)',
+                width: '7px', height: '11px', borderRadius: '1px',
+                background: i % 2 === 0 ? 'rgba(212,168,75,0.1)' : 'transparent',
+                border: '1px solid rgba(212,168,75,0.07)',
               }} />
             ))}
           </div>
         </div>
       </footer>
-
-      {/* Responsive styles */}
-      <style>{`
-        @media (max-width: 900px) {
-          .studio-grid {
-            grid-template-columns: 1fr !important;
-          }
-        }
-        @media (max-width: 640px) {
-          nav > div { padding: 0 16px !important; }
-          nav .label { display: none; }
-        }
-        input[type=range]::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          background: var(--gold);
-          cursor: pointer;
-        }
-        input[type=range]::-moz-range-thumb {
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          background: var(--gold);
-          border: none;
-          cursor: pointer;
-        }
-      `}</style>
     </div>
   );
 }

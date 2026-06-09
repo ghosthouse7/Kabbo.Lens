@@ -1,286 +1,344 @@
-import { useRef, useState, useCallback } from 'react';
+import { useState, useRef } from 'react';
 
-const BACKEND ='https://kabbolens-production.up.railway.app';
+const BACKEND = 'http://localhost:8080';
 
-// Web Audio fallback — generates synthetic sound when ElevenLabs is unavailable
-function createFallbackEngine() {
-  let ctx = null;
-  let masterGain = null;
-  let activeNodes = [];
+// Web Audio synthesis fallback
+function synthesizeSound(tag, ctx) {
+  const master = ctx.createGain();
+  master.gain.value = 0.28;
+  master.connect(ctx.destination);
+  const t = tag.toLowerCase();
 
-  function getCtx() {
-    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
-    return ctx;
+  if (t.includes('tram') || t.includes('bell')) {
+    [880, 1320, 660].forEach((freq, i) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(master); osc.type = 'sine'; osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.6 / (i + 1), ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.5 - i * 0.3);
+      osc.start(); osc.stop(ctx.currentTime + 2.5);
+    });
+    return { stop: () => {} };
   }
-
-  function stop() {
-    activeNodes.forEach(n => { try { n.stop(); } catch (_) {} });
-    activeNodes = [];
-    if (masterGain) { masterGain.disconnect(); masterGain = null; }
+  if (t.includes('rain') || t.includes('monsoon')) {
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.8;
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 800; f.Q.value = 0.3;
+    src.connect(f); f.connect(master); src.start();
+    return { stop: () => { try { src.stop(); } catch (e) {} } };
   }
-
-  function play(tag, volume = 0.6) {
-    stop();
-    const ac = getCtx();
-    masterGain = ac.createGain();
-    masterGain.gain.setValueAtTime(volume, ac.currentTime);
-    masterGain.connect(ac.destination);
-    const t = tag.toLowerCase();
-
-    if (t.includes('tram') || t.includes('bell')) {
-      // Tram bell: metallic ding sequence
-      [0, 0.4, 0.8].forEach(delay => {
-        const osc = ac.createOscillator();
-        const g = ac.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ac.currentTime + delay);
-        osc.frequency.exponentialRampToValueAtTime(440, ac.currentTime + delay + 1.2);
-        g.gain.setValueAtTime(0.8, ac.currentTime + delay);
-        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + delay + 1.5);
-        osc.connect(g); g.connect(masterGain);
-        osc.start(ac.currentTime + delay);
-        osc.stop(ac.currentTime + delay + 1.5);
-        activeNodes.push(osc);
-      });
-    } else if (t.includes('rain') || t.includes('monsoon')) {
-      // Rain: filtered noise
-      const buf = ac.createBuffer(1, ac.sampleRate * 4, ac.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-      const src = ac.createBufferSource();
-      src.buffer = buf; src.loop = true;
-      const filter = ac.createBiquadFilter();
-      filter.type = 'bandpass'; filter.frequency.value = 1200; filter.Q.value = 0.3;
-      src.connect(filter); filter.connect(masterGain);
-      src.start();
-      activeNodes.push(src);
-    } else if (t.includes('dhak') || t.includes('drum')) {
-      // Dhak: kick + snare pattern
-      const pattern = [0, 0.25, 0.4, 0.75, 1.0, 1.25, 1.5, 1.75];
-      pattern.forEach(delay => {
-        const osc = ac.createOscillator();
-        const g = ac.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(120, ac.currentTime + delay);
-        osc.frequency.exponentialRampToValueAtTime(40, ac.currentTime + delay + 0.15);
-        g.gain.setValueAtTime(1.0, ac.currentTime + delay);
-        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + delay + 0.2);
-        osc.connect(g); g.connect(masterGain);
-        osc.start(ac.currentTime + delay);
-        osc.stop(ac.currentTime + delay + 0.2);
-        activeNodes.push(osc);
-      });
-    } else if (t.includes('crow') || t.includes('bird')) {
-      // Crow: descending caw
-      [0, 1.2, 2.5].forEach(delay => {
-        const osc = ac.createOscillator();
-        const g = ac.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(600, ac.currentTime + delay);
-        osc.frequency.exponentialRampToValueAtTime(200, ac.currentTime + delay + 0.3);
-        g.gain.setValueAtTime(0.4, ac.currentTime + delay);
-        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + delay + 0.4);
-        osc.connect(g); g.connect(masterGain);
-        osc.start(ac.currentTime + delay);
-        osc.stop(ac.currentTime + delay + 0.4);
-        activeNodes.push(osc);
-      });
-    } else {
-      // Street noise / adda / default: layered filtered noise
-      const buf = ac.createBuffer(1, ac.sampleRate * 4, ac.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-      const src = ac.createBufferSource();
-      src.buffer = buf; src.loop = true;
-      const filter = ac.createBiquadFilter();
-      filter.type = 'lowpass'; filter.frequency.value = 800;
-      src.connect(filter); filter.connect(masterGain);
-      src.start();
-      activeNodes.push(src);
+  if (t.includes('dhak') || t.includes('drum')) {
+    const beat = (time, freq, decay) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(master);
+      osc.frequency.value = freq;
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.4, time + decay);
+      g.gain.setValueAtTime(1, time);
+      g.gain.exponentialRampToValueAtTime(0.001, time + decay);
+      osc.start(time); osc.stop(time + decay);
+    };
+    [0, 0.28, 0.56, 0.7, 0.98, 1.12].forEach(t => beat(ctx.currentTime + t, 100, 0.25));
+    [0.14, 0.42, 0.84].forEach(t => beat(ctx.currentTime + t, 60, 0.18));
+    return { stop: () => {} };
+  }
+  if (t.includes('crow') || t.includes('bird')) {
+    [0, 0.6, 1.2].forEach(delay => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(master); osc.type = 'sawtooth'; osc.frequency.value = 380;
+      const T = ctx.currentTime + delay;
+      g.gain.setValueAtTime(0, T);
+      g.gain.linearRampToValueAtTime(0.5, T + 0.04);
+      g.gain.setValueAtTime(0.5, T + 0.18);
+      g.gain.exponentialRampToValueAtTime(0.001, T + 0.38);
+      osc.start(T); osc.stop(T + 0.4);
+    });
+    return { stop: () => {} };
+  }
+  if (t.includes('adda') || t.includes('chatter') || t.includes('crowd')) {
+    const handles = [];
+    for (let i = 0; i < 6; i++) {
+      const osc = ctx.createOscillator(), g = ctx.createGain(),
+            lfo = ctx.createOscillator(), lfoG = ctx.createGain();
+      lfo.frequency.value = 1.5 + Math.random() * 3; lfoG.gain.value = 40;
+      lfo.connect(lfoG); lfoG.connect(osc.frequency);
+      osc.connect(g); g.connect(master);
+      osc.frequency.value = 120 + Math.random() * 220; g.gain.value = 0.03;
+      lfo.start(); osc.start(); handles.push(lfo, osc);
     }
+    return { stop: () => handles.forEach(h => { try { h.stop(); } catch (e) {} }) };
   }
-
-  return { play, stop };
+  if (t.includes('river') || t.includes('hooghly') || t.includes('ghat')) {
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 600;
+    src.connect(f); f.connect(master); src.start();
+    return { stop: () => { try { src.stop(); } catch (e) {} } };
+  }
+  // default street noise
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.4;
+  const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+  const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1000;
+  src.connect(f); f.connect(master); src.start();
+  return { stop: () => { try { src.stop(); } catch (e) {} } };
 }
 
-const SOUND_ICONS = {
-  'tram bells': '🚃',
-  'monsoon rain': '🌧️',
-  'adda chatter': '☕',
-  'dhak drums': '🥁',
-  'street noise': '🏙️',
-  'crow calls': '🐦',
+const SOUND_META = {
+  'tram bells':   { label: 'Tram Bell',    desc: 'Maidan tram depot'   },
+  'monsoon rain': { label: 'Monsoon Rain', desc: 'Kolkata downpour'    },
+  'dhak drums':   { label: 'Dhak Drums',   desc: 'Durga Puja rhythm'   },
+  'adda chatter': { label: 'Adda Chatter', desc: 'College St. chai'    },
+  'crow calls':   { label: 'Crow Calls',   desc: 'Rooftop at dawn'     },
+  'street noise': { label: 'Street Noise', desc: 'North Kolkata lane'  },
+  'river sounds': { label: 'River Ghat',   desc: 'Hooghly ferry'       },
 };
 
-const SOUND_LABELS = {
-  'tram bells': 'Tram Bells',
-  'monsoon rain': 'Monsoon Rain',
-  'adda chatter': 'Adda Chatter',
-  'dhak drums': 'Dhak Drums',
-  'street noise': 'Street Noise',
-  'crow calls': 'Crow Calls',
+function normalizeTag(tag) {
+  const t = tag.toLowerCase();
+  if (t.includes('tram') || t.includes('bell'))     return 'tram bells';
+  if (t.includes('rain') || t.includes('monsoon'))  return 'monsoon rain';
+  if (t.includes('dhak') || t.includes('drum'))     return 'dhak drums';
+  if (t.includes('adda') || t.includes('chatter'))  return 'adda chatter';
+  if (t.includes('crow') || t.includes('bird'))     return 'crow calls';
+  if (t.includes('river') || t.includes('hooghly')) return 'river sounds';
+  return 'street noise';
+}
+
+const Icons = {
+  play:  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+  pause: <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>,
+  vol:   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>,
 };
 
 export default function SoundPlayer({ soundTags = [] }) {
-  const [playing, setPlaying] = useState(null);
-  const [loading, setLoading] = useState(null);
-  const [volume, setVolume] = useState(0.7);
-  const [usingFallback, setUsingFallback] = useState(false);
-  const audioRef = useRef(null);
-  const fallback = useRef(null);
+  const [playing,  setPlaying]  = useState(null);
+  const [loading,  setLoading]  = useState(null);
+  const [volume,   setVolume]   = useState(0.7);
+  const [progress, setProgress] = useState({});
+  const [synth,    setSynth]    = useState({});
+  const [error,    setError]    = useState({});
+  const audioRef    = useRef(null);
+  const audioCtxRef = useRef(null);
+  const fallbackRef = useRef(null);
+  const cacheRef    = useRef({});   // keyed by canonical tag
 
-  const normalizeTags = useCallback((tags) => {
-    return tags.map(tag => {
-      const t = tag.toLowerCase();
-      if (t.includes('tram') || t.includes('bell')) return 'tram bells';
-      if (t.includes('rain') || t.includes('monsoon') || t.includes('water')) return 'monsoon rain';
-      if (t.includes('adda') || t.includes('chat') || t.includes('crowd') || t.includes('voice')) return 'adda chatter';
-      if (t.includes('dhak') || t.includes('drum') || t.includes('puja') || t.includes('festival')) return 'dhak drums';
-      if (t.includes('crow') || t.includes('bird')) return 'crow calls';
-      return 'street noise';
-    });
-  }, []);
-
-  const stopAll = useCallback(() => {
+  const stopAll = () => {
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current.src = '';
+      audioRef.current.ontimeupdate = null;
       audioRef.current = null;
     }
-    if (fallback.current) {
-      fallback.current.stop();
+    if (fallbackRef.current?.stop) {
+      fallbackRef.current.stop();
+      fallbackRef.current = null;
     }
-    setPlaying(null);
-  }, []);
+  };
 
-  const playSound = useCallback(async (rawTag) => {
-    const tag = normalizeTags([rawTag])[0];
-    if (playing === tag) { stopAll(); return; }
+  const playTag = async (rawTag) => {
+    // Toggle off
+    if (playing === rawTag) {
+      stopAll();
+      setPlaying(null);
+      return;
+    }
     stopAll();
-    setLoading(tag);
+    setLoading(rawTag);
+    setError(e => ({ ...e, [rawTag]: null }));
 
+    const canonical = normalizeTag(rawTag);
+
+    // ── Try real audio from backend ──────────────────────────────────────────
     try {
-      const resp = await fetch(`${BACKEND}/api/sound`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: tag }),
-      });
-      if (!resp.ok) throw new Error('ElevenLabs not available');
-      const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
+      let url = cacheRef.current[canonical];
+
+      if (!url) {
+        const res = await fetch(`${BACKEND}/api/sound`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: canonical }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          throw new Error(`Backend ${res.status}: ${text.slice(0, 80)}`);
+        }
+
+        // Check content-type — if JSON it's an error object, not audio
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          const json = await res.json();
+          throw new Error(json.error || 'Sound API returned JSON instead of audio');
+        }
+
+        const blob = await res.blob();
+        if (blob.size < 1000) throw new Error('Audio blob too small — likely empty response');
+
+        url = URL.createObjectURL(blob);
+        cacheRef.current[canonical] = url;
+      }
+
       const audio = new Audio(url);
       audio.volume = volume;
-      audio.loop = true;
-      audioRef.current = audio;
+      audio.loop   = true;
+      audio.ontimeupdate = () => {
+        if (audio.duration > 0)
+          setProgress(p => ({ ...p, [rawTag]: audio.currentTime / audio.duration }));
+      };
+      audio.onerror = () => {
+        console.warn('Audio element error — falling back to synth');
+        delete cacheRef.current[canonical];
+      };
       await audio.play();
-      setUsingFallback(false);
-      setPlaying(tag);
-    } catch (_) {
-      // Fallback to Web Audio synthesis
-      if (!fallback.current) fallback.current = createFallbackEngine();
-      fallback.current.play(tag, volume);
-      setUsingFallback(true);
-      setPlaying(tag);
+      audioRef.current = audio;
+      setSynth(s => ({ ...s, [rawTag]: false }));
+      setPlaying(rawTag);
+
+    } catch (err) {
+      console.warn(`[SoundPlayer] Backend audio failed (${err.message}) — using synth fallback`);
+
+      // ── Synthesizer fallback ───────────────────────────────────────────────
+      try {
+        if (!audioCtxRef.current || audioCtxRef.current.state === 'closed')
+          audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = audioCtxRef.current;
+        if (ctx.state === 'suspended') await ctx.resume();
+
+        fallbackRef.current = synthesizeSound(canonical, ctx);
+        setSynth(s => ({ ...s, [rawTag]: true }));
+        setPlaying(rawTag);
+      } catch (synthErr) {
+        console.error('[SoundPlayer] Synth fallback also failed:', synthErr);
+        setError(e => ({ ...e, [rawTag]: 'Could not play audio' }));
+      }
     } finally {
       setLoading(null);
     }
-  }, [playing, volume, stopAll, normalizeTags]);
+  };
 
-  const normalizedTags = normalizeTags(soundTags);
-  const uniqueTags = [...new Set(normalizedTags)];
+  const handleVolume = (v) => {
+    setVolume(v);
+    if (audioRef.current) audioRef.current.volume = v;
+  };
 
-  if (uniqueTags.length === 0) return null;
+  const uniqueTags = [...new Set(soundTags.filter(Boolean))];
+  if (!uniqueTags.length) return null;
 
   return (
-    <div style={{
-      marginTop: '20px',
-      padding: '16px 20px',
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(212,175,55,0.15)',
-      borderRadius: '12px',
-    }}>
+    <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', background: 'rgba(0,0,0,0.18)' }}>
+
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-        <span style={{ fontSize: '11px', letterSpacing: '0.15em', color: 'rgba(212,175,55,0.7)', textTransform: 'uppercase', fontFamily: 'monospace' }}>
-          Soundscape Layer
-        </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>vol</span>
-          <input
-            type="range" min="0" max="1" step="0.05"
-            value={volume}
-            onChange={e => {
-              const v = parseFloat(e.target.value);
-              setVolume(v);
-              if (audioRef.current) audioRef.current.volume = v;
-            }}
-            style={{ width: '72px', accentColor: '#d4af37', cursor: 'pointer' }}
-          />
+        <div className="label" style={{ fontSize: '7px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2">
+            <path d="M9 18V5l12-2v13"/>
+            <circle cx="6" cy="18" r="3"/>
+            <circle cx="18" cy="16" r="3"/>
+          </svg>
+          Ambient Soundscape
         </div>
+        {playing && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {Icons.vol}
+            <input
+              type="range" min="0" max="1" step="0.05" value={volume}
+              onChange={e => handleVolume(parseFloat(e.target.value))}
+              style={{
+                appearance: 'none', width: '70px', height: '2px', outline: 'none', cursor: 'pointer', border: 'none',
+                background: `linear-gradient(90deg,var(--gold) ${volume * 100}%,rgba(212,168,75,0.15) ${volume * 100}%)`,
+              }}
+            />
+            <span className="mono" style={{ fontSize: '8px', color: 'var(--ash)', minWidth: '28px' }}>
+              {Math.round(volume * 100)}%
+            </span>
+          </div>
+        )}
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-        {uniqueTags.map(tag => {
-          const isPlaying = playing === tag;
-          const isLoading = loading === tag;
+      {/* Tracks */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: '8px' }}>
+        {uniqueTags.map(rawTag => {
+          const canonical = normalizeTag(rawTag);
+          const meta      = SOUND_META[canonical] || { label: rawTag, desc: '' };
+          const isPlaying = playing === rawTag;
+          const isLoading = loading === rawTag;
+          const isSynth   = synth[rawTag];
+          const hasError  = error[rawTag];
+          const prog      = progress[rawTag] || 0;
+
           return (
             <button
-              key={tag}
-              onClick={() => playSound(tag)}
+              key={rawTag}
+              onClick={() => playTag(rawTag)}
               style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '7px 14px',
-                background: isPlaying
-                  ? 'rgba(212,175,55,0.2)'
-                  : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${isPlaying ? 'rgba(212,175,55,0.6)' : 'rgba(255,255,255,0.1)'}`,
-                borderRadius: '20px',
-                color: isPlaying ? '#d4af37' : 'rgba(255,255,255,0.65)',
-                fontSize: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '10px 12px',
+                border: `1px solid ${isPlaying ? 'var(--border-hi)' : hasError ? 'rgba(200,80,80,0.3)' : 'var(--border)'}`,
+                borderRadius: 'var(--radius)',
+                background: isPlaying ? 'rgba(212,168,75,0.07)' : 'var(--bg-1)',
+                cursor: 'pointer', transition: 'var(--transition)',
+                textAlign: 'left', position: 'relative', overflow: 'hidden',
               }}
             >
-              {isLoading ? (
-                <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⟳</span>
-              ) : isPlaying ? (
-                <WaveformBars />
-              ) : (
-                <span>{SOUND_ICONS[tag] || '🔊'}</span>
+              {/* Progress bar */}
+              {isPlaying && !isSynth && (
+                <div style={{ position: 'absolute', bottom: 0, left: 0, height: '2px', width: `${prog * 100}%`, background: 'var(--gold)', transition: 'width 0.5s linear' }} />
               )}
-              <span>{SOUND_LABELS[tag] || tag}</span>
+
+              {/* Play/Pause circle */}
+              <div style={{
+                width: '28px', height: '28px', flexShrink: 0, borderRadius: '50%',
+                border: `1px solid ${isPlaying ? 'var(--border-hi)' : 'var(--border-mid)'}`,
+                background: isPlaying ? 'rgba(212,168,75,0.14)' : 'var(--bg-2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: isPlaying ? 'var(--gold)' : 'var(--ash)',
+              }}>
+                {isLoading ? (
+                  <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(212,168,75,0.3)', borderTopColor: 'var(--gold)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                ) : isPlaying ? Icons.pause : Icons.play}
+              </div>
+
+              {/* Label */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontFamily: 'var(--font-display)', fontStyle: isPlaying ? 'italic' : 'normal',
+                  fontSize: '13px', fontWeight: 300,
+                  color: hasError ? 'rgba(200,80,80,0.8)' : isPlaying ? 'var(--gold)' : 'var(--cream-faint)',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                }}>
+                  {meta.label}
+                </div>
+                <div className="label" style={{ fontSize: '6px', marginTop: '1px', opacity: 0.6 }}>
+                  {hasError ? 'unavailable' : isPlaying ? (isSynth ? 'synthesized' : 'streaming') : meta.desc}
+                </div>
+              </div>
+
+              {/* EQ bars when playing */}
               {isPlaying && (
-                <span style={{ fontSize: '10px', opacity: 0.7 }}>■</span>
+                <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', height: '14px', flexShrink: 0 }}>
+                  {[0, 1, 2, 3].map(i => (
+                    <div key={i} style={{
+                      width: '2px', background: 'var(--gold)', borderRadius: '1px',
+                      height: `${5 + i * 2.5}px`,
+                      animation: `eq ${0.35 + i * 0.09}s ease-in-out infinite alternate`,
+                      transformOrigin: 'bottom',
+                    }} />
+                  ))}
+                </div>
               )}
             </button>
           );
         })}
       </div>
 
-      {usingFallback && playing && (
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', marginTop: '10px', margin: '10px 0 0' }}>
-          ∿ Synthetic audio (add ELEVENLABS_API_KEY for cinematic quality)
-        </p>
-      )}
-
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes bar { 0%,100% { transform: scaleY(0.4); } 50% { transform: scaleY(1); } }
+        @keyframes spin { to { transform: rotate(360deg) } }
+        @keyframes eq { from { transform: scaleY(0.3) } to { transform: scaleY(1) } }
+        input[type=range]::-webkit-slider-thumb { appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); cursor: pointer; }
       `}</style>
     </div>
-  );
-}
-
-function WaveformBars() {
-  return (
-    <span style={{ display: 'flex', alignItems: 'center', gap: '2px', height: '14px' }}>
-      {[0, 0.15, 0.3, 0.45].map((delay, i) => (
-        <span key={i} style={{
-          width: '2px', height: '100%', background: '#d4af37', borderRadius: '1px',
-          animation: `bar 0.7s ease-in-out ${delay}s infinite`,
-          display: 'inline-block',
-        }} />
-      ))}
-    </span>
   );
 }
