@@ -9,12 +9,14 @@ function getVoicesAsync() {
   return new Promise((resolve) => {
     const voices = window.speechSynthesis.getVoices();
     if (voices.length > 0) { resolve(voices); return; }
-    // Wait for voices to load (max 2s)
-    const timeout = setTimeout(() => resolve(window.speechSynthesis.getVoices()), 2000);
+    
+    // Just one event listener
     window.speechSynthesis.onvoiceschanged = () => {
-      clearTimeout(timeout);
       resolve(window.speechSynthesis.getVoices());
     };
+    
+    // Safety timeout
+    setTimeout(() => resolve(window.speechSynthesis.getVoices()), 2000);
   });
 }
 
