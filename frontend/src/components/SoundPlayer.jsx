@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 
-const BACKEND = '';
+const BACKEND = 'https://kabbolens-production.up.railway.app';
 
 // Web Audio synthesis fallback
 function synthesizeSound(tag, ctx) {

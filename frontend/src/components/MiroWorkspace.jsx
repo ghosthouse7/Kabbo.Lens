@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const BACKEND = '';
+const BACKEND = 'https://kabbolens-production.up.railway.app';
 const STEPS = [
   'Authenticating with Miro…',
   'Drafting new canvas…',
