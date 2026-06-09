@@ -10,7 +10,7 @@ import ResultPanel    from './components/ResultPanel';
 import HeritageMap    from './components/HeritageMap';
 import ArchiveGrid    from './components/ArchiveGrid';
 
-const BACKEND = 'http://localhost:8080';
+const BACKEND = 'https://kabbolens-production.up.railway.app';
 
 // ─── Refined SVG Icons for Output Types ────────────────────────────────────────
 const ScriptIcon = () => (

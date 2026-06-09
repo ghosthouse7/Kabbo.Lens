@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-const BACKEND = 'http://localhost:8080';
+const BACKEND = 'https://kabbolens-production.up.railway.app';
 
 const HERITAGE_PINS = [
   { name: 'College Street',    lat: 22.5796, lng: 88.3630, type: 'heritage' },
