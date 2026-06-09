@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import SoundPlayer from './SoundPlayer';
 import MiroWorkspace from './MiroWorkspace'; // <--- ADD THIS
 
 // ─── Bengali Narrator ─────────────────────────────────────────────────────────
