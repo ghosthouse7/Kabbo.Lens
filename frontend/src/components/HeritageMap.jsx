@@ -14,6 +14,25 @@ const HERITAGE_PINS = [
   { name: 'Esplanade',         lat: 22.5657, lng: 88.3511, type: 'heritage' },
 ];
 
+// ─── Dadu Avatar Component ────────────────────────────────────────────────────
+const DaduAvatar = () => (
+  <div style={{
+    width: '32px', height: '32px', borderRadius: '50%',
+    background: 'rgba(212,168,75,0.1)', border: '1px solid rgba(212,168,75,0.3)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    boxShadow: '0 0 10px rgba(212,168,75,0.1)'
+  }}>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="7" r="4"></circle>
+      <path d="M5.5 21v-2a4 4 0 0 1 4-4h5a4 4 0 0 1 4 4v2"></path>
+      {/* Classic Dadu Spectacles */}
+      <circle cx="9" cy="7" r="1.5"></circle>
+      <circle cx="15" cy="7" r="1.5"></circle>
+      <path d="M10.5 7h3"></path>
+    </svg>
+  </div>
+);
+
 export default function HeritageMap({ mapPins = [] }) {
   const mapRef          = useRef(null);
   const leafletRef      = useRef(null);
@@ -125,14 +144,14 @@ export default function HeritageMap({ mapPins = [] }) {
     document.head.appendChild(script);
   }, []);
 
-  const fetchGuide = async (locationName, userQuestion) => {
+  const fetchGuide = async (locationKey, userQuestion) => {
     setLoadingGuide(true);
     const q = userQuestion || 'Tell me the hidden secrets and stories of this place.';
     try {
       const res = await fetch(`${BACKEND}/api/guide`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ location: locationName, question: q }),
+        body: JSON.stringify({ location: locationKey, question: q }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -164,32 +183,44 @@ export default function HeritageMap({ mapPins = [] }) {
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       
-      if (data.location && leafletRef.current && window.L) {
-        const pin = HERITAGE_PINS.find(p => p.name === data.location);
-        const lat = pin ? pin.lat : data.lat;
-        const lng = pin ? pin.lng : data.lng;
+      if (data.exact_item && leafletRef.current && window.L) {
+        // Use the AI coordinates or fallback
+        const lat = data.lat;
+        const lng = data.lng;
 
-        leafletRef.current.flyTo([lat, lng], 15);
-        if (pin) setSelected(pin);
+        leafletRef.current.flyTo([lat, lng], 16);
+        
+        // Pass rich data to the sidebar
+        setSelected({
+            name: data.exact_item,
+            type: 'heritage',
+            significance: data.significance,
+            realLocation: data.real_location,
+            nearestKey: data.nearest_heritage || data.location,
+            isSearchRes: true
+        });
         
         if (searchMarkerRef.current) {
           leafletRef.current.removeLayer(searchMarkerRef.current);
         }
 
-        // ─── THE NEW, PREMIUM FLOATING MARKER ───
+        // ─── UPGRADED PREMIUM FLOATING MARKER WITH HIGH-RES DATA ───
         const premiumIcon = window.L.divIcon({
           html: `
-            <div style="display:flex; flex-direction:column; align-items:center; margin-top: -65px; margin-left: -75px; width: 150px; animation: floatMarker 2.5s ease-in-out infinite;">
-              <div style="background: rgba(15, 14, 16, 0.95); backdrop-filter: blur(8px); border: 1px solid rgba(212,168,75,0.4); padding: 8px 14px; border-radius: 4px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.8);">
+            <div style="display:flex; flex-direction:column; align-items:center; margin-top: -85px; margin-left: -90px; width: 180px; animation: floatMarker 2.5s ease-in-out infinite;">
+              <div style="background: rgba(15, 14, 16, 0.95); backdrop-filter: blur(8px); border: 1px solid rgba(212,168,75,0.4); padding: 10px 14px; border-radius: 6px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.8);">
                 <div style="font-family: var(--font-body), sans-serif; font-size: 6px; letter-spacing: 0.15em; color: var(--ash); text-transform: uppercase; margin-bottom: 4px;">
-                  Location Identified
+                  Identified · ${Math.round((data.confidence || 0.9) * 100)}% Match
                 </div>
-                <div style="font-family: var(--font-display), serif; font-size: 15px; color: var(--gold); font-style: italic; line-height: 1.1;">
-                  ${data.location}
+                <div style="font-family: var(--font-display), serif; font-size: 14px; color: var(--gold); font-style: italic; line-height: 1.1; margin-bottom: 4px;">
+                  ${data.exact_item}
+                </div>
+                <div style="font-size: 7px; color: var(--cream-faint); font-family: var(--font-body); white-space: normal; line-height: 1.3;">
+                  ${data.real_location}
                 </div>
               </div>
-              <div style="width: 1px; height: 18px; background: linear-gradient(to bottom, rgba(212,168,75,0.4), transparent);"></div>
-              <div style="width: 6px; height: 6px; background: var(--gold); border-radius: 50%; box-shadow: 0 0 12px var(--gold);"></div>
+              <div style="width: 1px; height: 24px; background: linear-gradient(to bottom, rgba(212,168,75,0.5), transparent);"></div>
+              <div style="width: 8px; height: 8px; background: var(--gold); border-radius: 50%; box-shadow: 0 0 16px var(--gold);"></div>
             </div>
             <style>@keyframes floatMarker { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }</style>
           `,
@@ -204,8 +235,9 @@ export default function HeritageMap({ mapPins = [] }) {
         setGuideHistory([]);
         setQuestion('');
         
-        const daduPrompt = `I just found this place (${data.location}) using my camera. Share a personal memory you have about this exact spot, and tell me 2 or 3 nearest cultural spots I should walk to from here.`;
-        fetchGuide(data.location, daduPrompt);
+        // Pass the backend key to the guide handler
+        const daduPrompt = `I just found this place (${data.exact_item}) using my camera. Share a personal memory you have about this exact spot, and tell me 2 or 3 nearest cultural spots I should walk to from here.`;
+        fetchGuide(data.nearest_heritage || data.location, daduPrompt);
         
       } else {
         alert('Could not pinpoint the Kolkata location from this image.');
@@ -236,9 +268,9 @@ export default function HeritageMap({ mapPins = [] }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 340px' : '1fr', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 360px' : '1fr', gap: '16px' }}>
 
-        {/* Map with relative positioning for the floating button */}
+        {/* Map */}
         <div style={{ position: 'relative' }}>
           <div
             ref={mapRef}
@@ -249,15 +281,14 @@ export default function HeritageMap({ mapPins = [] }) {
             }}
           />
           
-          {/* Floating Reverse Image Search Upload Button */}
           <label style={{
             position: 'absolute', top: '15px', right: '15px', zIndex: 1000,
             background: 'rgba(15, 14, 16, 0.85)', backdropFilter: 'blur(4px)',
-            color: 'var(--gold)', border: '1px solid var(--border)',
+            color: 'var(--gold)', border: '1px solid rgba(212,168,75,0.4)',
             padding: '8px 12px', borderRadius: 'var(--radius)', fontSize: '10px', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: '6px',
             fontFamily: 'var(--font-display)', textTransform: 'uppercase', letterSpacing: '0.05em',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s ease', boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
           }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
@@ -275,13 +306,16 @@ export default function HeritageMap({ mapPins = [] }) {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 300, fontSize: '20px', color: 'var(--gold)', marginBottom: '4px' }}>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 300, fontSize: '20px', color: 'var(--gold)', marginBottom: '4px', lineHeight: 1.2 }}>
                   {selected.name}
                 </h3>
+                {selected.realLocation && (
+                   <div className="mono" style={{ fontSize: '7px', color: 'var(--ash)', marginBottom: '4px' }}>{selected.realLocation}</div>
+                )}
                 {selected.type === 'story' && (
                   <div className="label" style={{ fontSize: '6px', color: 'var(--green)' }}>Generated story</div>
                 )}
-                {selected.type === 'heritage' && (
+                {selected.type === 'heritage' && !selected.isSearchRes && (
                   <div className="label" style={{ fontSize: '6px', opacity: 0.5 }}>Heritage site · Local Guide</div>
                 )}
               </div>
@@ -291,6 +325,16 @@ export default function HeritageMap({ mapPins = [] }) {
               >×</button>
             </div>
 
+            {/* AI Vision Significance Box */}
+            {selected.isSearchRes && selected.significance && (
+              <div style={{ background: 'rgba(212,168,75,0.05)', border: '1px dashed rgba(212,168,75,0.2)', padding: '12px', borderRadius: '6px', marginBottom: '4px' }}>
+                <div className="label" style={{ fontSize: '6px', color: 'var(--gold)', marginBottom: '6px', letterSpacing: '0.1em' }}>AI VISION SCAN</div>
+                <div style={{ fontSize: '11.5px', color: 'var(--cream-faint)', lineHeight: 1.6, fontFamily: 'var(--font-display)', fontWeight: 300 }}>
+                  {selected.significance}
+                </div>
+              </div>
+            )}
+
             {/* Story excerpt */}
             {selected.type === 'story' && selected.content && (
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 300, fontSize: '12px', lineHeight: 1.9, color: 'var(--cream-faint)', whiteSpace: 'pre-wrap' }}>
@@ -298,26 +342,40 @@ export default function HeritageMap({ mapPins = [] }) {
               </div>
             )}
 
-            {/* Dadu guide section */}
+            {/* Upgraded Dadu Chat Section */}
             {selected.type === 'heritage' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '4px' }}>
 
-                {/* Conversation history */}
+                {/* Conversation history bubbles */}
                 {guideHistory.map((item, i) => (
-                  <div key={i} style={{ borderLeft: '2px solid rgba(212,168,75,0.2)', paddingLeft: '12px' }}>
-                    <div className="mono" style={{ fontSize: '7px', color: 'var(--gold)', opacity: 0.6, marginBottom: '4px' }}>
-                      {item.q}
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    
+                    {/* User Bubble */}
+                    <div style={{ alignSelf: 'flex-end', background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '8px 12px', borderRadius: '8px 8px 0 8px', maxWidth: '85%' }}>
+                      <div style={{ fontSize: '10.5px', color: 'var(--cream)', lineHeight: 1.4, fontFamily: 'var(--font-body)' }}>{item.q}</div>
                     </div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '12px', lineHeight: 1.8, color: 'var(--cream-faint)', whiteSpace: 'pre-wrap' }}>
-                      {item.a}
+                    
+                    {/* Dadu Bubble */}
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                      <DaduAvatar />
+                      <div style={{ background: 'rgba(212,168,75,0.08)', border: '1px solid rgba(212,168,75,0.2)', padding: '10px 14px', borderRadius: '0 8px 8px 8px', maxWidth: '85%', position: 'relative' }}>
+                        <div className="label" style={{ fontSize: '6px', color: 'var(--gold)', marginBottom: '4px', letterSpacing: '0.1em' }}>DADU SAYS...</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '12.5px', lineHeight: 1.7, color: 'var(--cream-faint)', whiteSpace: 'pre-wrap' }}>
+                          {item.a}
+                        </div>
+                      </div>
                     </div>
+
                   </div>
                 ))}
 
                 {/* Loading */}
                 {loadingGuide && (
-                  <div className="label" style={{ fontSize: '7px', animation: 'shimmer 1.5s infinite', color: 'var(--gold)' }}>
-                    Recalling memories…
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginTop: '4px' }}>
+                    <DaduAvatar />
+                    <div className="label" style={{ fontSize: '7px', animation: 'shimmer 1.5s infinite', color: 'var(--gold)', padding: '10px 0' }}>
+                      Recalling memories…
+                    </div>
                   </div>
                 )}
 
@@ -325,42 +383,36 @@ export default function HeritageMap({ mapPins = [] }) {
                 {!guideHistory.length && !loadingGuide && (
                   <button
                     className="btn btn-primary"
-                    onClick={() => fetchGuide(selected.name, '')}
-                    style={{ width: '100%', justifyContent: 'center', fontSize: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onClick={() => fetchGuide(selected.nearestKey || selected.name, '')}
+                    style={{ width: '100%', justifyContent: 'center', fontSize: '10px', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10"></circle>
                       <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
                     </svg>
-                    Consult Heritage Guide
+                    Consult Heritage Guide (Dadu)
                   </button>
                 )}
 
-                {/* Follow-up input — shown after first answer */}
+                {/* Follow-up input */}
                 {guideHistory.length > 0 && !loadingGuide && (
-                  <div style={{ display: 'flex', gap: '6px' }}>
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
                     <input
                       type="text"
-                      placeholder="Ask another question…"
+                      placeholder="Ask Dadu another question…"
                       value={question}
                       onChange={e => setQuestion(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && question.trim() && fetchGuide(selected.name, question.trim())}
+                      onKeyDown={e => e.key === 'Enter' && question.trim() && fetchGuide(selected.nearestKey || selected.name, question.trim())}
                       style={{
-                        flex: 1,
-                        background: 'var(--bg-2)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius)',
-                        color: 'var(--cream)',
-                        padding: '6px 10px',
-                        fontSize: '11px',
-                        fontFamily: 'var(--font-body)',
-                        outline: 'none',
+                        flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius)', color: 'var(--cream)', padding: '8px 12px',
+                        fontSize: '11px', fontFamily: 'var(--font-body)', outline: 'none',
                       }}
                     />
                     <button
                       className="btn"
-                      onClick={() => question.trim() && fetchGuide(selected.name, question.trim())}
-                      style={{ fontSize: '8px', padding: '6px 10px' }}
+                      onClick={() => question.trim() && fetchGuide(selected.nearestKey || selected.name, question.trim())}
+                      style={{ fontSize: '9px', padding: '0 14px' }}
                       disabled={!question.trim()}
                     >Ask</button>
                   </div>

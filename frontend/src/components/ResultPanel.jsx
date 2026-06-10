@@ -1,34 +1,30 @@
 import { useState, useEffect, useRef } from 'react';
-import MiroWorkspace from './MiroWorkspace'; // <--- ADD THIS
+import MiroWorkspace from './MiroWorkspace'; 
 
 // ─── Bengali Narrator ─────────────────────────────────────────────────────────
-// getVoices() is empty on first call in all browsers — must wait for onvoiceschanged
 
 function getVoicesAsync() {
   return new Promise((resolve) => {
     const voices = window.speechSynthesis.getVoices();
     if (voices.length > 0) { resolve(voices); return; }
     
-    // Just one event listener
     window.speechSynthesis.onvoiceschanged = () => {
       resolve(window.speechSynthesis.getVoices());
     };
     
-    // Safety timeout
     setTimeout(() => resolve(window.speechSynthesis.getVoices()), 2000);
   });
 }
 
 async function pickBengaliVoice() {
   const voices = await getVoicesAsync();
-  // Priority: Bengali → Hindi-IN → any Indian English → default
   const bn = voices.find(v => v.lang.startsWith('bn'));
   if (bn) return bn;
   const hi = voices.find(v => v.lang === 'hi-IN');
   if (hi) return hi;
   const en = voices.find(v => v.lang === 'en-IN');
   if (en) return en;
-  return null; // browser default
+  return null; 
 }
 
 // ─── Refined Icons ────────────────────────────────────────────────────────────
@@ -102,7 +98,6 @@ function formatContent(content, outputType) {
           </div>
         );
       }
-      // Dialogue detection: lines starting with caps name followed by colon
       const dialogueMatch = line.match(/^([A-Z][A-Z\s]+):\s*(.*)/);
       if (dialogueMatch && dialogueMatch[1].length < 25) {
         return (
@@ -122,7 +117,6 @@ function formatContent(content, outputType) {
       );
     });
   }
-  // Poem
   return (
     <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 300, fontSize: '14px', lineHeight: 2.1, color: 'var(--cream-faint)', whiteSpace: 'pre-wrap' }}>
       {content}
@@ -136,7 +130,6 @@ export default function ResultPanel({ result, loading, image, era }) {
   const [narrating,  setNarrating]  = useState(false);
   const utteranceRef = useRef(null);
 
-  // Stop narration if result changes
   useEffect(() => {
     return () => {
       window.speechSynthesis?.cancel();
@@ -160,7 +153,6 @@ export default function ResultPanel({ result, loading, image, era }) {
       return;
     }
 
-    // Cancel any ongoing speech first
     window.speechSynthesis.cancel();
 
     const voice = await pickBengaliVoice();
@@ -189,7 +181,6 @@ export default function ResultPanel({ result, loading, image, era }) {
     setNarrating(true);
   };
 
-  // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="card anim-fade-in" style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', justifyContent: 'center', minHeight: '320px' }}>
@@ -205,7 +196,6 @@ export default function ResultPanel({ result, loading, image, era }) {
     );
   }
 
-  // ── Empty state ────────────────────────────────────────────────────────────
   if (!result) {
     return (
       <div className="card" style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center', justifyContent: 'center', minHeight: '320px', textAlign: 'center', border: '1px dashed rgba(212,168,75,0.2)' }}>
@@ -217,14 +207,11 @@ export default function ResultPanel({ result, loading, image, era }) {
     );
   }
 
-  // ── Result ─────────────────────────────────────────────────────────────────
   const outputLabel = { script: 'Film Script', poem: 'Poem', storyboard: 'Storyboard' }[result.output_type] || result.output_type;
   const eraLabel = result.era || era || '';
 
   return (
     <div className="card anim-fade-in" style={{ overflow: 'hidden' }}>
-
-      {/* ── Header ── */}
       <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -252,7 +239,6 @@ export default function ResultPanel({ result, loading, image, era }) {
             )}
           </div>
 
-          {/* Action buttons */}
           <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
             <button
               onClick={handleNarrate}
@@ -293,7 +279,6 @@ export default function ResultPanel({ result, loading, image, era }) {
           </div>
         </div>
 
-        {/* Tags */}
         {result.tags?.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '12px' }}>
             {result.tags.map((tag, i) => (
@@ -303,17 +288,11 @@ export default function ResultPanel({ result, loading, image, era }) {
         )}
       </div>
 
-      {/* ── Content ── */}
       <div style={{ padding: '24px', maxHeight: '480px', overflowY: 'auto' }}>
         {formatContent(result.content, result.output_type)}
       </div>
 
-      {/* ── Sound Player ── */}
-      {result.sound_tags?.length > 0 && (
-        <SoundPlayer soundTags={result.sound_tags} />
-      )}
-
-      {/* ── Miro Workspace Integration ── */}
+      {/* Miro Workspace Component properly rendered here */}
       <MiroWorkspace result={result} />
     </div>
   );
