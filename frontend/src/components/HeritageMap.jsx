@@ -122,20 +122,26 @@ export default function HeritageMap({ mapPins = [] }) {
         body: JSON.stringify({ location: locationKey, question: q }),
       });
       
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // EXTRA BRAIN ACTIVATED: We force it to parse the JSON error payload
+      const data = await res.json().catch(() => ({}));
       
-      const data = await res.json();
+      // If the server failed, throw the REAL error the server sent, not just "HTTP 500"
+      if (!res.ok) {
+        throw new Error(data.error || data.message || `HTTP ${res.status} (No error message provided by backend)`);
+      }
+      
+      // Catch any embedded errors
       if (data.error) throw new Error(data.error);
       
       const answer = data.guide || 'Dadu has no stories right now.';
-      
       setGuideHistory(h => [...h, { type: 'dadu', text: answer }]);
       
     } catch (err) {
       console.error('Guide error:', err);
+      // Dadu will now print the raw diagnostic error to the UI
       setGuideHistory(h => [...h, { 
         type: 'dadu', 
-        text: "Arre bhai, my memory is a bit foggy right now (API Server limit reached). Let me rest for a minute, then ask me again!" 
+        text: `[SYSTEM DIAGNOSTIC] Real reason: ${err.message}` 
       }]);
     } finally {
       setLoadingGuide(false);
@@ -195,8 +201,6 @@ export default function HeritageMap({ mapPins = [] }) {
         searchMarkerRef.current = window.L.marker([lat, lng], { icon: premiumIcon }).addTo(leafletRef.current);
         setGuideHistory([]);
         setQuestion('');
-        
-        // BOOM! The auto-trigger is gone! Dadu won't spam the API anymore.
         
       } else {
         alert('Could not pinpoint the Kolkata location from this image.');
