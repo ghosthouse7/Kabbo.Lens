@@ -35,7 +35,7 @@ export default function HeritageMap({ mapPins = [] }) {
   const mapRef          = useRef(null);
   const leafletRef      = useRef(null);
   const searchMarkerRef = useRef(null); 
-  const chatEndRef      = useRef(null); // To auto-scroll chat
+  const chatEndRef      = useRef(null); 
   
   const [selected,     setSelected]     = useState(null);
   const [guideHistory, setGuideHistory] = useState([]);
@@ -44,14 +44,12 @@ export default function HeritageMap({ mapPins = [] }) {
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [mapLoaded,    setMapLoaded]    = useState(false);
 
-  // Auto-scroll chat window when new messages arrive
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [guideHistory, loadingGuide]);
 
-  // Load Leaflet CSS
   useEffect(() => {
     if (!document.getElementById('leaflet-css')) {
       const link = document.createElement('link');
@@ -62,7 +60,6 @@ export default function HeritageMap({ mapPins = [] }) {
     }
   }, []);
 
-  // Init map
   useEffect(() => {
     if (leafletRef.current || !mapRef.current) return;
 
@@ -115,7 +112,6 @@ export default function HeritageMap({ mapPins = [] }) {
     setLoadingGuide(true);
     const q = userQuestion || 'Tell me the hidden secrets and stories of this place.';
     
-    // Optimistically add the user's question to the chat window immediately
     setGuideHistory(h => [...h, { type: 'user', text: q }]);
     setQuestion('');
 
@@ -133,12 +129,10 @@ export default function HeritageMap({ mapPins = [] }) {
       
       const answer = data.guide || 'Dadu has no stories right now.';
       
-      // Add Dadu's answer to the chat window
       setGuideHistory(h => [...h, { type: 'dadu', text: answer }]);
       
     } catch (err) {
       console.error('Guide error:', err);
-      // FIXED: If API fails/rate limits, Dadu still replies with an error bubble!
       setGuideHistory(h => [...h, { 
         type: 'dadu', 
         text: "Arre bhai, my memory is a bit foggy right now (API Server limit reached). Let me rest for a minute, then ask me again!" 
@@ -202,8 +196,7 @@ export default function HeritageMap({ mapPins = [] }) {
         setGuideHistory([]);
         setQuestion('');
         
-        // Trigger Dadu's initial memory explicitly
-        fetchGuide(data.nearest_heritage || data.location, `I just found this place (${data.exact_item}) using my camera. Share a personal memory you have about this exact spot!`);
+        // BOOM! The auto-trigger is gone! Dadu won't spam the API anymore.
         
       } else {
         alert('Could not pinpoint the Kolkata location from this image.');
