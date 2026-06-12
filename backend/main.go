@@ -50,6 +50,7 @@ type GenerateResponse struct {
 	Content    string   `json:"content"`
 	Mood       string   `json:"mood"`
 	Tags       []string `json:"tags"`
+	SoundTags  []string `json:"soundTags"`
 	Location   string   `json:"location"`
 	Era        string   `json:"era"`
 }
@@ -60,6 +61,7 @@ type ArchiveEntry struct {
 	Content    string   `json:"content"`
 	Mood       string   `json:"mood"`
 	Tags       []string `json:"tags"`
+	SoundTags  []string `json:"soundTags"`
 	Location   string   `json:"location"`
 	Lat        float64  `json:"lat"`
 	Lng        float64  `json:"lng"`
@@ -72,7 +74,6 @@ type IdentifyResult struct {
 	ConfidenceScore        float64 `json:"confidence_score"`
 	Lat                    float64 `json:"lat"`
 	Lng                    float64 `json:"lng"`
-	NearestHeritage        string  `json:"nearest_heritage"`
 }
 
 var archive []ArchiveEntry
@@ -130,65 +131,45 @@ var heritageSecrets = map[string]string{
 	"Shyambazar":        "The five-pointed crossing was designed by the British to confuse revolutionaries fleeing the police. The adda here has run continuously since 1947.",
 	"North Kolkata":     "The oldest part of the city. Narrow lanes hide 200-year-old mansions abandoned after Partition. Ghosts of zamindars walk the rooftops at dusk.",
 	"Esplanade":         "The Metro here is the oldest underground railway in Asia, opened 1984. The maidan was used for British horse races — grass still grows differently where the tracks were.",
-	"Victoria Memorial": "Built by Lord Curzon, its white Makrana marble glows gold at sunset. The 16-ton bronze angel on top rotates with the wind. Beneath its pristine gardens lie hidden underground tunnels once connected to Fort William, alongside ruins of an ancient Mughal garden.",
-	"Dakshineswar":      "Ramakrishna Paramahansa meditated here for 12 years. The temple's nine spires represent the nine forms of Durga. Priests say the Ganga here flows northward — the only place in Kolkata where it does.",
-	"Belur Math":        "Swami Vivekananda designed this temple to look like a church from the front, a mosque from the back, and a temple from above. He died here in 1902 at just 39. The Math holds his original belongings.",
-	"Indian Museum":     "The oldest museum in Asia, founded 1814. Its collection includes a genuine Buddha relic. The skeleton of a blue whale hangs in the natural history section — brought piece by piece from the Andamans.",
-	"Howrah Station":    "One of the busiest railway stations in the world — over 1 million passengers daily. During Durga Puja, the number triples. The station has been continuously operational since 1854.",
-	"Eden Gardens":      "The oldest cricket ground in India, opened 1864. The pitch soil is replaced every year — the old soil is sold to fans as a relic. A live well beneath the ground keeps the pitch moist even in summer.",
-	"Kalighat":          "The Kali temple here is so ancient its founding date is unknown. The idol's tongue is made of gold. Tantric practitioners still perform rituals here at 3 AM that date back 1,200 years.",
-	"Marble Palace":     "Built in 1835 by a zamindar who imported 90 types of Italian marble. It contains original Rubens and Reynolds paintings. The family still lives here — you can visit, but you must be formally invited.",
-	"Princep Ghat":      "Named after James Prinsep who decoded the Brahmi script. The ghat was the social heart of colonial Calcutta. The river lanterns released here on Kali Puja night drift all the way to the Bay of Bengal.",
+	"Victoria Memorial": "Built by Lord Curzon, its white Makrana marble glows gold at sunset. Beneath its pristine gardens lie hidden underground tunnels once connected to Fort William.",
+	"Dakshineswar":      "Ramakrishna Paramahansa meditated here for 12 years. The temple's nine spires represent the nine forms of Durga.",
+	"Belur Math":        "Swami Vivekananda designed this temple to look like a church from the front, a mosque from the back, and a temple from above. He died here in 1902 at just 39.",
+	"Indian Museum":     "The oldest museum in Asia, founded 1814. Its collection includes a genuine Buddha relic. The skeleton of a blue whale hangs in the natural history section.",
+	"Howrah Station":    "One of the busiest railway stations in the world — over 1 million passengers daily. The station has been continuously operational since 1854.",
+	"Eden Gardens":      "The oldest cricket ground in India, opened 1864. A live well beneath the ground keeps the pitch moist even in summer.",
+	"Kalighat":          "The Kali temple here is so ancient its founding date is unknown. Tantric practitioners still perform rituals here at 3 AM that date back 1200 years.",
+	"Marble Palace":     "Built in 1835 by a zamindar who imported 90 types of Italian marble. It contains original Rubens and Reynolds paintings. The family still lives here.",
+	"Princep Ghat":      "Named after James Prinsep who decoded the Brahmi script. The river lanterns released here on Kali Puja night drift all the way to the Bay of Bengal.",
 }
+
+const GITHUB_MODELS_URL = "https://models.inference.ai.azure.com/chat/completions"
+const MIRO_BOARDS_URL = "https://api.miro.com/v2/boards"
 
 func nearestLocation(loc string) (string, float64, float64) {
 	locLower := strings.ToLower(loc)
-
 	for name, coords := range heritageLocations {
 		if strings.Contains(locLower, strings.ToLower(name)) {
 			return name, coords[0], coords[1]
 		}
 	}
-
 	aliases := map[string]string{
-		"victoria":       "Victoria Memorial",
-		"howrah bridge":  "Howrah Bridge",
-		"rabindra":       "Jorasanko",
-		"tagore":         "Jorasanko",
-		"jorasanko":      "Jorasanko",
-		"kali":           "Kalighat",
-		"kalighat":       "Kalighat",
-		"dakshineswar":   "Dakshineswar",
-		"belur":          "Belur Math",
-		"indian museum":  "Indian Museum",
-		"coffee house":   "College Street",
-		"book market":    "College Street",
-		"boi para":       "College Street",
-		"tram":           "Maidan Tram Depot",
-		"maidan":         "Maidan",
-		"eden":           "Eden Gardens",
-		"cricket":        "Eden Gardens",
-		"howrah station": "Howrah Station",
-		"sealdah":        "Sealdah Station",
-		"fort william":   "Fort William",
-		"st paul":        "St. Paul's Cathedral",
-		"paul's":         "St. Paul's Cathedral",
-		"marble palace":  "Marble Palace",
-		"princep":        "Princep Ghat",
-		"mullick":        "Mullick Ghat",
-		"flower market":  "Mullick Ghat",
-		"nakhoda":        "Nakhoda Mosque",
-		"mosque":         "Nakhoda Mosque",
-		"armenian":       "Armenian Church",
-		"new market":     "New Market",
-		"hogg market":    "New Market",
-		"shaheed minar":  "Shaheed Minar",
-		"ochterlony":     "Shaheed Minar",
-		"writers":        "Writers Building",
-		"high court":     "High Court",
-		"gpo":            "GPO Kolkata",
+		"victoria": "Victoria Memorial", "howrah bridge": "Howrah Bridge",
+		"rabindra": "Jorasanko", "tagore": "Jorasanko", "jorasanko": "Jorasanko",
+		"kali": "Kalighat", "kalighat": "Kalighat", "dakshineswar": "Dakshineswar",
+		"belur": "Belur Math", "indian museum": "Indian Museum",
+		"coffee house": "College Street", "book market": "College Street",
+		"boi para": "College Street", "tram": "Maidan Tram Depot",
+		"maidan": "Maidan", "eden": "Eden Gardens", "cricket": "Eden Gardens",
+		"howrah station": "Howrah Station", "sealdah": "Sealdah Station",
+		"fort william": "Fort William", "st paul": "St. Paul's Cathedral",
+		"marble palace": "Marble Palace", "princep": "Princep Ghat",
+		"mullick": "Mullick Ghat", "flower market": "Mullick Ghat",
+		"nakhoda": "Nakhoda Mosque", "mosque": "Nakhoda Mosque",
+		"armenian": "Armenian Church", "new market": "New Market",
+		"hogg market": "New Market", "shaheed minar": "Shaheed Minar",
+		"ochterlony": "Shaheed Minar", "writers": "Writers Building",
+		"high court": "High Court", "gpo": "GPO Kolkata",
 	}
-
 	for keyword, locationName := range aliases {
 		if strings.Contains(locLower, keyword) {
 			if coords, ok := heritageLocations[locationName]; ok {
@@ -196,7 +177,6 @@ func nearestLocation(loc string) (string, float64, float64) {
 			}
 		}
 	}
-
 	return "Esplanade", 22.5657, 88.3511
 }
 
@@ -212,6 +192,7 @@ Format strictly as:
 TITLE: [evocative title]
 MOOD: [one atmospheric phrase]
 TAGS: [comma-separated tags]
+SOUND_TAGS: [comma-separated ambient sounds like: tram bells, monsoon rain, adda chatter, dhak drums, crow calls]
 LOCATION: [one specific Kolkata neighbourhood]
 ERA: [1960s or 1970s or 1990s or modern]
 ---
@@ -223,6 +204,7 @@ Format strictly as:
 TITLE: [title]
 MOOD: [one atmospheric phrase]
 TAGS: [comma-separated tags]
+SOUND_TAGS: [comma-separated ambient sounds like: tram bells, monsoon rain, adda chatter, dhak drums, crow calls]
 LOCATION: [one specific Kolkata neighbourhood]
 ERA: [1960s or 1970s or 1990s or modern]
 ---
@@ -232,6 +214,7 @@ Format strictly as:
 TITLE: [title]
 MOOD: [one atmospheric phrase]
 TAGS: [comma-separated tags]
+SOUND_TAGS: [comma-separated ambient sounds like: tram bells, monsoon rain, adda chatter, dhak drums, crow calls]
 LOCATION: [one specific Kolkata neighbourhood]
 ERA: [1960s or 1970s or 1990s or modern]
 ---
@@ -278,6 +261,7 @@ func parseResponse(raw, outputType string) GenerateResponse {
 	resp.Era = parseField(raw, "ERA:")
 	resp.Location = parseField(raw, "LOCATION:")
 	resp.Tags = parseTags(parseField(raw, "TAGS:"))
+	resp.SoundTags = parseTags(parseField(raw, "SOUND_TAGS:"))
 	idx := strings.Index(raw, "---")
 	if idx != -1 {
 		resp.Content = strings.TrimSpace(raw[idx+3:])
@@ -300,7 +284,7 @@ func callGitHubModels(token, systemPrompt, imageB64, mediaType, outputType strin
 		},
 	}
 	body, _ := json.Marshal(req)
-	httpReq, _ := http.NewRequest("POST", "https://models.inference.ai.azure.com/chat/completions", bytes.NewReader(body))
+	httpReq, _ := http.NewRequest("POST", GITHUB_MODELS_URL, bytes.NewReader(body))
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+token)
 	client := &http.Client{}
@@ -372,6 +356,7 @@ func generateHandler(c *gin.Context) {
 		Content:    result.Content,
 		Mood:       result.Mood,
 		Tags:       result.Tags,
+		SoundTags:  result.SoundTags,
 		Location:   locName,
 		Lat:        lat,
 		Lng:        lng,
@@ -381,12 +366,16 @@ func generateHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"result": result, "archive": entry})
 }
 
-// ─── Reverse Image Search Handler ────────────────────────────────────────────
+// ─── Reverse Image Search (uses GPT-4o vision) ────────────────────────────────
 
 func reverseSearchHandler(c *gin.Context) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "GITHUB_TOKEN not set"})
+		return
+	}
+	if err := c.Request.ParseMultipartForm(20 << 20); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form"})
 		return
 	}
 	file, header, err := c.Request.FormFile("image")
@@ -410,13 +399,11 @@ func reverseSearchHandler(c *gin.Context) {
 	systemPrompt := `You are an expert on Kolkata's cultural heritage, architecture, streets, and history.
 
 Analyze this image carefully. Identify the specific Kolkata landmark, street, neighbourhood, or cultural site shown.
-Look for: architectural style, signage (Bengali or English), distinctive structures, vegetation, vehicles, crowd types, lighting conditions, river presence, bridge shapes, dome profiles, spire patterns.
-
-Respond ONLY with a JSON object in this exact format (no markdown code blocks, no extra text):
+Respond ONLY with a JSON object in this exact format (no markdown, no code blocks):
 {
   "item_name": "Exact name of the location or landmark",
   "location": "Specific area, Kolkata, India",
-  "historical_significance": "2 sentences explaining why this place matters in Kolkata's history and culture.",
+  "historical_significance": "2 sentences explaining why this place matters in Kolkata history.",
   "confidence_score": 0.92,
   "lat": 22.5448,
   "lng": 88.3426
@@ -424,8 +411,8 @@ Respond ONLY with a JSON object in this exact format (no markdown code blocks, n
 
 Rules:
 - item_name must be specific (e.g. "Victoria Memorial" not "a large building")
-- lat/lng must be accurate coordinates for that location in Kolkata
-- If you cannot identify a specific location, use your best judgment based on visual clues
+- lat/lng must be accurate Kolkata coordinates
+- If you cannot identify it, use your best visual judgment
 - confidence_score between 0.1 and 1.0`
 
 	req := ChatRequest{
@@ -434,23 +421,24 @@ Rules:
 			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: []ContentPart{
 				{Type: "image_url", ImageURL: &ImageURL{URL: dataURL, Detail: "high"}},
+				{Type: "text", Text: "Identify this Kolkata location precisely."},
 			}},
 		},
 	}
 	body, _ := json.Marshal(req)
-	httpReq, _ := http.NewRequest("POST", "https://models.inference.ai.azure.com/chat/completions", bytes.NewReader(body))
+	httpReq, _ := http.NewRequest("POST", GITHUB_MODELS_URL, bytes.NewReader(body))
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+token)
 	client := &http.Client{}
 	resp, err := client.Do(httpReq)
-	if err != nil || resp.StatusCode != 200 {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Vision API failed"})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Vision API failed: " + err.Error()})
 		return
 	}
 	defer resp.Body.Close()
 	var chatResp ChatResponse
 	json.NewDecoder(resp.Body).Decode(&chatResp)
-	if len(chatResp.Choices) == 0 {
+	if chatResp.Error != nil || len(chatResp.Choices) == 0 {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "No response from model"})
 		return
 	}
@@ -464,13 +452,9 @@ Rules:
 	var idResult IdentifyResult
 	if err := json.Unmarshal([]byte(rawJSON), &idResult); err != nil {
 		c.JSON(http.StatusOK, gin.H{
-			"location":         "Kolkata",
-			"lat":              22.5726,
-			"lng":              88.3639,
-			"exact_item":       "Kolkata Heritage Location",
-			"real_location":    "Kolkata, India",
-			"significance":     "A beautiful corner of the City of Joy.",
-			"confidence":       0.5,
+			"location": "Kolkata", "lat": 22.5726, "lng": 88.3639,
+			"exact_item": "Kolkata Heritage Location", "real_location": "Kolkata, India",
+			"significance": "A beautiful corner of the City of Joy.", "confidence": 0.5,
 			"nearest_heritage": "Esplanade",
 		})
 		return
@@ -479,20 +463,15 @@ Rules:
 	lat := idResult.Lat
 	lng := idResult.Lng
 	nearestName, fallbackLat, fallbackLng := nearestLocation(idResult.ItemName + " " + idResult.Location)
-
 	if lat < 22.4 || lat > 22.8 || lng < 88.2 || lng > 88.5 {
 		lat = fallbackLat
 		lng = fallbackLng
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"location":         nearestName,
-		"lat":              lat,
-		"lng":              lng,
-		"exact_item":       idResult.ItemName,
-		"real_location":    idResult.Location,
-		"significance":     idResult.HistoricalSignificance,
-		"confidence":       idResult.ConfidenceScore,
+		"location": nearestName, "lat": lat, "lng": lng,
+		"exact_item": idResult.ItemName, "real_location": idResult.Location,
+		"significance": idResult.HistoricalSignificance, "confidence": idResult.ConfidenceScore,
 		"nearest_heritage": nearestName,
 	})
 }
@@ -500,11 +479,16 @@ Rules:
 // ─── Heritage Guide Handler (Dadu) ───────────────────────────────────────────
 
 func guideHandler(c *gin.Context) {
-	token := os.Getenv("GITHUB_TOKEN")
+	// 🚨 HACKATHON MAGIC: Isolated token logic for Dadu!
+	token := os.Getenv("DADU_GITHUB_TOKEN")
 	if token == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "GITHUB_TOKEN not set"})
+		token = os.Getenv("GITHUB_TOKEN") // Fallback to main token if missing
+	}
+	if token == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "No API tokens found for Dadu"})
 		return
 	}
+
 	var body struct {
 		Location string `json:"location"`
 		Question string `json:"question"`
@@ -513,9 +497,10 @@ func guideHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "location required"})
 		return
 	}
+
 	secret := heritageSecrets[body.Location]
 	if secret == "" {
-		secret = fmt.Sprintf("A fascinating location in Kolkata with deep historical roots and stories waiting to be told.")
+		secret = fmt.Sprintf("Ah, %s! My memory is a bit foggy on the exact dates, but I've seen that area change so much over the decades.", body.Location)
 	}
 	question := body.Question
 	if question == "" {
@@ -533,15 +518,14 @@ Your personality:
 - You end with one very specific practical tip for visitors
 - You speak with affection and mild nostalgia, never like a textbook
 
-Location you are currently describing: %s
-Known facts and secrets about this place: %s
+Location: %s
+Context: %s
 
-Important rules:
+Rules:
 - Stay under 200 words
 - Sound like a real person telling a real story, not an AI
 - Use Bengali phrases naturally, not forced
-- Be specific — mention real years, real names, real details
-- Never say "As an AI" or anything meta`, body.Location, body.Location, secret)
+- Be specific — mention real years, real names, real details`, body.Location, body.Location, secret)
 
 	req := ChatRequest{
 		Model: "gpt-4o", MaxTokens: 400, Temperature: 0.92,
@@ -551,9 +535,10 @@ Important rules:
 		},
 	}
 	reqBody, _ := json.Marshal(req)
-	httpReq, _ := http.NewRequest("POST", "[https://models.inference.ai.azure.com/chat/completions](https://models.inference.ai.azure.com/chat/completions)", bytes.NewReader(reqBody))
+	httpReq, _ := http.NewRequest("POST", GITHUB_MODELS_URL, bytes.NewReader(reqBody))
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+token)
+
 	client := &http.Client{}
 	resp, err := client.Do(httpReq)
 	if err != nil {
@@ -561,8 +546,16 @@ Important rules:
 		return
 	}
 	defer resp.Body.Close()
+
+	rawBody, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("AI Token Limit Reached (Status %d)", resp.StatusCode)})
+		return
+	}
+
 	var chatResp ChatResponse
-	json.NewDecoder(resp.Body).Decode(&chatResp)
+	json.Unmarshal(rawBody, &chatResp)
+
 	if chatResp.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": chatResp.Error.Message})
 		return
@@ -571,6 +564,7 @@ Important rules:
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no response"})
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"guide":    chatResp.Choices[0].Message.Content,
 		"location": body.Location,
@@ -603,7 +597,7 @@ func miroHandler(c *gin.Context) {
 		"name":        boardName,
 		"description": fmt.Sprintf("Generated by Kabbo.Lens · %s · %s · %s", result.OutputType, result.Location, result.Era),
 	})
-	req, _ := http.NewRequest("POST", "[https://api.miro.com/v2/boards](https://api.miro.com/v2/boards)", bytes.NewReader(boardReqJSON))
+	req, _ := http.NewRequest("POST", MIRO_BOARDS_URL, bytes.NewReader(boardReqJSON))
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
@@ -615,7 +609,7 @@ func miroHandler(c *gin.Context) {
 	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
 		b, _ := io.ReadAll(resp.Body)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Miro board error %d: %s", resp.StatusCode, string(b))})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Miro error %d: %s", resp.StatusCode, string(b))})
 		return
 	}
 	var boardResp struct {
@@ -659,26 +653,7 @@ func miroHandler(c *gin.Context) {
 		req3.Header.Set("Content-Type", "application/json")
 		client.Do(req3)
 	}
-
-	if len(result.Tags) > 0 {
-		tagsText := "Tags: " + strings.Join(result.Tags, " · ")
-		tagsJSON, _ := json.Marshal(map[string]interface{}{
-			"data":     map[string]interface{}{"content": tagsText, "format": "plain"},
-			"style":    map[string]interface{}{"fillColor": "#1a1a2e", "textColor": "#8a7a5a"},
-			"position": map[string]interface{}{"x": 0, "y": 500},
-			"geometry": map[string]interface{}{"width": 800},
-		})
-		req4, _ := http.NewRequest("POST",
-			fmt.Sprintf("[https://api.miro.com/v2/boards/%s/text](https://api.miro.com/v2/boards/%s/text)", boardResp.ID),
-			bytes.NewReader(tagsJSON))
-		req4.Header.Set("Authorization", "Bearer "+apiKey)
-		req4.Header.Set("Content-Type", "application/json")
-		client.Do(req4)
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"board_url": boardResp.ViewLink,
-		"board_id":  boardResp.ID,
-	})
+	c.JSON(http.StatusOK, gin.H{"board_url": boardResp.ViewLink, "board_id": boardResp.ID})
 }
 
 func splitContent(content string, maxLen int) []string {
@@ -707,26 +682,154 @@ func splitContent(content string, maxLen int) []string {
 	return chunks
 }
 
+// ─── Sound Handler (ElevenLabs Sound Effects) ────────────────────────────────
+
+func soundHandler(c *gin.Context) {
+	apiKey := os.Getenv("ELEVENLABS_API_KEY")
+	var body struct {
+		Prompt string `json:"prompt"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil || body.Prompt == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "prompt required"})
+		return
+	}
+
+	soundPrompts := map[string]string{
+		"tram bells":     "Kolkata yellow tram bell clanging on rails, vintage metallic echo, 1970s street ambience, nostalgic",
+		"monsoon rain":   "Heavy monsoon rain on tin roof in Kolkata, distant thunder, wet streets, tropical downpour",
+		"adda chatter":   "Bengali adda conversation in a North Kolkata tea stall, animated discussion, cups clinking, warm ambience",
+		"dhak drums":     "Traditional Bengali dhak drums during Durga Puja festival, rhythmic powerful beats, festive crowd",
+		"street noise":   "North Kolkata narrow lane ambience, bicycle bells, vendors calling, distant traffic, birds",
+		"crow calls":     "Kolkata crows cawing at dawn, ambient city background, early morning sounds",
+		"river sounds":   "Hooghly river sounds, ferry horn, water lapping against ghat steps, distant boat engines",
+		"morning prayer": "Kolkata morning, temple bells, azaan in distance, birds chirping, early street sounds",
+	}
+
+	prompt := body.Prompt
+	for key, enriched := range soundPrompts {
+		if strings.Contains(strings.ToLower(body.Prompt), strings.ToLower(key)) {
+			prompt = enriched
+			break
+		}
+	}
+
+	if apiKey == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ELEVENLABS_API_KEY not set, using synthesis fallback"})
+		return
+	}
+
+	reqBody, _ := json.Marshal(map[string]interface{}{
+		"text":             prompt,
+		"duration_seconds": 15,
+		"prompt_influence": 0.4,
+	})
+	httpReq, _ := http.NewRequest("POST", "[https://api.elevenlabs.io/v1/sound-generation](https://api.elevenlabs.io/v1/sound-generation)", bytes.NewReader(reqBody))
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("xi-api-key", apiKey)
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+	audioBytes, _ := io.ReadAll(resp.Body)
+	c.Header("Content-Type", "audio/mpeg")
+	c.Header("Cache-Control", "public, max-age=86400")
+	c.Data(http.StatusOK, "audio/mpeg", audioBytes)
+}
+
+// ─── Narrator Handler (ElevenLabs TTS) ──────────────────────────────────────
+
+func narratorHandler(c *gin.Context) {
+	apiKey := os.Getenv("ELEVENLABS_API_KEY")
+	var body struct {
+		Text  string `json:"text"`
+		Voice string `json:"voice"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil || body.Text == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "text required"})
+		return
+	}
+	if apiKey == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ELEVENLABS_API_KEY not set"})
+		return
+	}
+
+	voiceMap := map[string]string{
+		"poet":        "onwK4e9ZLuTAKqWW03F9",
+		"storyteller": "pNInz6obpgDQGcFmaJgB",
+		"guide":       "VR6AewLTigWG4xSOukaG",
+	}
+	voiceID := voiceMap["poet"]
+	if v, ok := voiceMap[body.Voice]; ok {
+		voiceID = v
+	}
+
+	reqBody, _ := json.Marshal(map[string]interface{}{
+		"text":     body.Text,
+		"model_id": "eleven_multilingual_v2",
+		"voice_settings": map[string]interface{}{
+			"stability": 0.4, "similarity_boost": 0.85, "style": 0.3, "use_speaker_boost": true,
+		},
+	})
+	httpReq, _ := http.NewRequest("POST",
+		"[https://api.elevenlabs.io/v1/text-to-speech/](https://api.elevenlabs.io/v1/text-to-speech/)"+voiceID,
+		bytes.NewReader(reqBody))
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("xi-api-key", apiKey)
+	httpReq.Header.Set("Accept", "audio/mpeg")
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+	audioBytes, _ := io.ReadAll(resp.Body)
+	c.Header("Content-Type", "audio/mpeg")
+	c.Header("Cache-Control", "public, max-age=3600")
+	c.Data(http.StatusOK, "audio/mpeg", audioBytes)
+}
+
 // ─── Archive Handler ──────────────────────────────────────────────────────────
 
 func archiveHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"entries": archive})
+	c.JSON(http.StatusOK, gin.H{"entries": archive, "items": archive})
 }
 
-// ─── CORS Middleware Setup ─────────────────────────────────────────────────────
+// ─── Locations Handler ────────────────────────────────────────────────────────
+
+func locationsHandler(c *gin.Context) {
+	type LocPin struct {
+		Name        string  `json:"name"`
+		Lat         float64 `json:"lat"`
+		Lng         float64 `json:"lng"`
+		Description string  `json:"description"`
+	}
+	var pins []LocPin
+	for name, coords := range heritageLocations {
+		desc := heritageSecrets[name]
+		if desc == "" {
+			desc = "A significant heritage location in Kolkata."
+		}
+		pins = append(pins, LocPin{Name: name, Lat: coords[0], Lng: coords[1], Description: desc})
+	}
+	c.JSON(http.StatusOK, pins)
+}
+
+// ─── CORS Middleware ──────────────────────────────────────────────────────────
 
 func corsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
-
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
 		}
-
 		c.Next()
 	}
 }
@@ -735,28 +838,29 @@ func corsMiddleware() gin.HandlerFunc {
 
 func main() {
 	if os.Getenv("GITHUB_TOKEN") == "" {
-		fmt.Println("WARNING: GITHUB_TOKEN not set")
+		fmt.Println("WARNING: GITHUB_TOKEN not set — generation will fail")
 	}
 
 	r := gin.Default()
-
-	// Add original CORS middleware
 	r.Use(corsMiddleware())
 
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "Kabbo.Lens alive 🎞️"})
+		c.JSON(http.StatusOK, gin.H{"status": "Kabbo.Lens alive"})
 	})
 
 	r.POST("/api/generate", generateHandler)
 	r.POST("/api/identify", reverseSearchHandler)
 	r.POST("/api/guide", guideHandler)
 	r.POST("/api/miro", miroHandler)
+	r.POST("/api/sound", soundHandler)
+	r.POST("/api/narrator", narratorHandler)
 	r.GET("/api/archive", archiveHandler)
+	r.GET("/api/locations", locationsHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	fmt.Printf("🎞️  Kabbo.Lens backend on :%s\n", port)
+	fmt.Printf("Kabbo.Lens backend on :%s\n", port)
 	r.Run(":" + port)
 }

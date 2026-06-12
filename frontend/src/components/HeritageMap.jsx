@@ -122,15 +122,12 @@ export default function HeritageMap({ mapPins = [] }) {
         body: JSON.stringify({ location: locationKey, question: q }),
       });
       
-      // EXTRA BRAIN ACTIVATED: We force it to parse the JSON error payload
       const data = await res.json().catch(() => ({}));
       
-      // If the server failed, throw the REAL error the server sent, not just "HTTP 500"
       if (!res.ok) {
-        throw new Error(data.error || data.message || `HTTP ${res.status} (No error message provided by backend)`);
+        throw new Error(data.error || data.message || `HTTP ${res.status}`);
       }
       
-      // Catch any embedded errors
       if (data.error) throw new Error(data.error);
       
       const answer = data.guide || 'Dadu has no stories right now.';
@@ -138,10 +135,9 @@ export default function HeritageMap({ mapPins = [] }) {
       
     } catch (err) {
       console.error('Guide error:', err);
-      // Dadu will now print the raw diagnostic error to the UI
       setGuideHistory(h => [...h, { 
         type: 'dadu', 
-        text: `[SYSTEM DIAGNOSTIC] Real reason: ${err.message}` 
+        text: `Arre bhai, I am a little tired right now. Give me a minute to catch my breath! (${err.message})` 
       }]);
     } finally {
       setLoadingGuide(false);
@@ -214,7 +210,7 @@ export default function HeritageMap({ mapPins = [] }) {
   };
 
   return (
-    <div>
+    <div className="vintage-workspace" style={{ padding: '20px', minHeight: '100vh' }}>
       <div style={{ marginBottom: '20px' }}>
         <div className="label" style={{ marginBottom: '8px', fontSize: '8px' }}>
           Heritage Map · Kolkata Cultural Memory

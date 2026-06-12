@@ -234,3 +234,47 @@ body {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ─── KABBO.LENS VINTAGE KOLKATA THEME ─── */
+
+/* We wrap our main working pages in this class so the Landing Page stays untouched */
+.vintage-workspace {
+  /* Deep Shutter Green & Red Oxide Palette */
+  --bg-1: #111c16; /* Darkest alleyway green */
+  --bg-2: #1c3024; /* Faded Italian shutter green */
+  --border: #5a2626; /* Old exposed brick/red oxide */
+  --gold: #d4a84b; 
+
+  /* The Moving "Bhangechora" Texture Background */
+  position: relative;
+  min-height: 100vh;
+  /* We use a rich gradient mixed with a vintage grunge texture image */
+  background: 
+    linear-gradient(to bottom right, rgba(17, 28, 22, 0.85), rgba(60, 20, 20, 0.85)),
+    url('https://images.unsplash.com/photo-1518382410313-5cb78c66eeb4?q=80&w=2000&auto=format&fit=crop') center/cover;
+  background-attachment: fixed;
+  
+  /* The slow cinematic movement */
+  animation: slowPan 40s ease-in-out infinite alternate;
+}
+
+/* Makes the background slowly drift like a drone shot */
+@keyframes slowPan {
+  0% { background-position: 0% 0%; background-size: 100%; }
+  100% { background-position: 100% 100%; background-size: 110%; }
+}
+
+/* Glassmorphism for the UI cards so the moving vintage background bleeds through! */
+.vintage-workspace .card,
+.vintage-workspace .panel {
+  background: rgba(28, 48, 36, 0.4) !important; /* Semi-transparent green */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(90, 38, 38, 0.5) !important; /* Faded red border */
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Tint the scrollbars to match the red oxide */
+.vintage-workspace ::-webkit-scrollbar-thumb {
+  background: rgba(90, 38, 38, 0.8); 
+}
