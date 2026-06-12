@@ -1,5 +1,7 @@
+/* 1. IMPORTS MUST BE AT THE VERY TOP */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Mono:wght@300;400&family=Cinzel:wght@400;600&display=swap');
 
+/* 2. CORE ROOT VARIABLES */
 :root {
   /* ── Core palette ── */
   --ink:          #09080a;
@@ -23,7 +25,7 @@
   --border-mid:   rgba(212,168,75,0.25);
   --border-hi:    rgba(212,168,75,0.50);
 
-  /* ── Backgrounds ── */
+  /* ── Backgrounds (Default Dark) ── */
   --bg-0:         #09080a;
   --bg-1:         rgba(255,255,255,0.02);
   --bg-2:         rgba(255,255,255,0.04);
@@ -47,12 +49,9 @@
   /* ── Motion ── */
   --transition:   all 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --transition-fast: all 0.12s ease;
-
-  /* ── Grain overlay ── */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
 
-/* ── Reset ── */
+/* 3. RESET & BASE */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; }
@@ -72,7 +71,7 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(212,168,75,0.2); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(212,168,75,0.4); }
 
-/* ── Utility classes ── */
+/* 4. UTILITY CLASSES */
 .label {
   font-family: var(--font-mono);
   font-size: 9px;
@@ -84,18 +83,6 @@ body {
 .mono {
   font-family: var(--font-mono);
   font-size: 11px;
-}
-
-.tag {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--ash);
-  background: transparent;
 }
 
 .card {
@@ -128,11 +115,6 @@ body {
   background: var(--bg-hover);
 }
 
-.btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
 .btn-primary {
   background: var(--gold-faint);
   border-color: var(--border-mid);
@@ -148,133 +130,81 @@ body {
   box-shadow: 0 0 24px rgba(212,168,75,0.12);
 }
 
-.btn-ghost {
-  border-color: var(--border);
-  color: var(--ash);
-}
-
-.btn-ghost:hover {
-  border-color: var(--border-mid);
-  color: var(--cream-faint);
-}
-
-.scroll-area {
-  overflow-y: auto;
-}
-
 .hover-lift {
-  transition: var(--transition);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
 }
-
 .hover-lift:hover {
-  transform: translateY(-1px);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
 }
 
-/* ── Animations ── */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes anim-fade-up {
-  from { opacity: 0; transform: translateY(12px); }
+/* 5. KEYFRAMES & ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes filmReveal {
+  from { opacity: 0; transform: scale(1.08); filter: blur(14px) brightness(1.4); }
+  to   { opacity: 1; transform: scale(1); filter: blur(0) brightness(1); }
 }
 
 @keyframes shimmer {
-  0%, 100% { opacity: 0.5; }
+  0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
 }
 
-@keyframes orb-drift {
-  0%   { transform: translate(0, 0) scale(1); }
-  33%  { transform: translate(30px, -20px) scale(1.05); }
-  66%  { transform: translate(-20px, 15px) scale(0.97); }
-  100% { transform: translate(0, 0) scale(1); }
-}
-
-@keyframes grain-shift {
-  0%, 100% { transform: translate(0, 0); }
-  20%       { transform: translate(-1px, 1px); }
-  40%       { transform: translate(1px, -1px); }
-  60%       { transform: translate(-1px, -1px); }
-  80%       { transform: translate(1px, 1px); }
-}
-
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 0 rgba(212,168,75,0); }
-  50%       { box-shadow: 0 0 28px rgba(212,168,75,0.18); }
+  0%, 100% { box-shadow: 0 0 12px rgba(214,179,106,0.08), inset 0 0 20px rgba(214,179,106,0.02); }
+  50% { box-shadow: 0 0 32px rgba(214,179,106,0.18), inset 0 0 30px rgba(214,179,106,0.05); }
 }
 
-@keyframes eq {
-  from { transform: scaleY(0.3); }
-  to   { transform: scaleY(1); }
-}
+/* Animation Utilities */
+.anim-fade-up { animation: fadeUp 0.55s cubic-bezier(0.4,0,0.2,1) forwards; }
+.anim-fade-in { animation: fadeIn 0.4s ease forwards; }
+.anim-film-reveal { animation: filmReveal 0.7s cubic-bezier(0.4,0,0.2,1) forwards; }
+.glow-pulse { animation: glow-pulse 3.5s ease-in-out infinite; }
 
-@keyframes reel-spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes landing-reveal {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.anim-fade-up {
-  animation: anim-fade-up 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-
-.glow-pulse {
-  animation: glow-pulse 2.4s ease-in-out infinite;
-}
-
-/* ── Responsive ── */
-@media (max-width: 900px) {
-  .studio-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* ─── KABBO.LENS VINTAGE KOLKATA THEME ─── */
-
-/* We wrap our main working pages in this class so the Landing Page stays untouched */
+/* 6. VINTAGE KOLKATA THEME (The Magic!) */
 .vintage-workspace {
-  /* Deep Shutter Green & Red Oxide Palette */
-  --bg-1: #111c16; /* Darkest alleyway green */
-  --bg-2: #1c3024; /* Faded Italian shutter green */
-  --border: #5a2626; /* Old exposed brick/red oxide */
+  /* Override the generic dark mode variables with Shutter Green & Red Oxide */
+  --bg-1: #111c16; 
+  --bg-2: #1c3024; 
+  --border: rgba(90, 38, 38, 0.6); 
   --gold: #d4a84b; 
 
-  /* The Moving "Bhangechora" Texture Background */
   position: relative;
   min-height: 100vh;
-  /* We use a rich gradient mixed with a vintage grunge texture image */
+  
+  /* The breathing background image */
   background: 
     linear-gradient(to bottom right, rgba(17, 28, 22, 0.85), rgba(60, 20, 20, 0.85)),
     url('https://images.unsplash.com/photo-1518382410313-5cb78c66eeb4?q=80&w=2000&auto=format&fit=crop') center/cover;
   background-attachment: fixed;
-  
-  /* The slow cinematic movement */
   animation: slowPan 40s ease-in-out infinite alternate;
 }
 
-/* Makes the background slowly drift like a drone shot */
 @keyframes slowPan {
   0% { background-position: 0% 0%; background-size: 100%; }
   100% { background-position: 100% 100%; background-size: 110%; }
 }
 
-/* Glassmorphism for the UI cards so the moving vintage background bleeds through! */
+/* Make the UI cards frosted glass so the background bleeds through */
 .vintage-workspace .card,
 .vintage-workspace .panel {
-  background: rgba(28, 48, 36, 0.4) !important; /* Semi-transparent green */
+  background: rgba(28, 48, 36, 0.4) !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(90, 38, 38, 0.5) !important; /* Faded red border */
+  border: 1px solid rgba(90, 38, 38, 0.5) !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 
-/* Tint the scrollbars to match the red oxide */
 .vintage-workspace ::-webkit-scrollbar-thumb {
   background: rgba(90, 38, 38, 0.8); 
 }
