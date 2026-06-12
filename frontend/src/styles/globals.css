@@ -3,7 +3,6 @@
 
 /* 2. CORE ROOT VARIABLES */
 :root {
-  /* ── Core palette ── */
   --ink:          #09080a;
   --ink-2:        #0f0e10;
   --ink-3:        #161418;
@@ -13,49 +12,40 @@
   --smoke:        rgba(244,239,228,0.18);
   --parchment:    #e8dfc8;
 
-  /* ── Gold system ── */
   --gold:         #d4a84b;
   --gold-bright:  #e8c06a;
   --gold-dim:     #a07830;
   --gold-faint:   rgba(212,168,75,0.08);
   --gold-subtle:  rgba(212,168,75,0.04);
 
-  /* ── Borders ── */
   --border:       rgba(212,168,75,0.10);
   --border-mid:   rgba(212,168,75,0.25);
   --border-hi:    rgba(212,168,75,0.50);
 
-  /* ── Backgrounds (Default Dark) ── */
   --bg-0:         #09080a;
   --bg-1:         rgba(255,255,255,0.02);
   --bg-2:         rgba(255,255,255,0.04);
   --bg-hover:     rgba(212,168,75,0.05);
 
-  /* ── Status ── */
   --red:          #c94040;
   --green:        #4a8c6a;
 
-  /* ── Typography ── */
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-cinzel:  'Cinzel', serif;
   --font-mono:    'DM Mono', 'Courier New', monospace;
 
-  /* ── Radii ── */
   --radius-sm:    4px;
   --radius:       8px;
   --radius-lg:    12px;
   --radius-xl:    18px;
 
-  /* ── Motion ── */
   --transition:   all 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --transition-fast: all 0.12s ease;
 }
 
 /* 3. RESET & BASE */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { scroll-behavior: smooth; }
-
 body {
   font-family: var(--font-display);
   background: var(--ink);
@@ -65,115 +55,60 @@ body {
   overflow-x: hidden;
 }
 
-/* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(212,168,75,0.2); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(212,168,75,0.4); }
 
-/* 4. UTILITY CLASSES */
-.label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--ash);
-}
-
-.mono {
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
-.card {
-  background: var(--bg-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-}
+/* 4. UTILITIES & BUTTONS */
+.label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ash); }
+.mono { font-family: var(--font-mono); font-size: 11px; }
+.card { background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius-lg); }
 
 .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition: var(--transition);
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--ash);
-  padding: 8px 14px;
-  white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer;
+  border-radius: var(--radius-sm); transition: var(--transition); border: 1px solid var(--border);
+  background: transparent; color: var(--ash); padding: 8px 14px; white-space: nowrap;
 }
+.btn:hover { border-color: var(--border-mid); color: var(--cream); background: var(--bg-hover); }
+.btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-.btn:hover {
-  border-color: var(--border-mid);
-  color: var(--cream);
-  background: var(--bg-hover);
-}
+.btn-primary { background: var(--gold-faint); border-color: var(--border-mid); color: var(--gold); font-size: 10px; letter-spacing: 0.25em; }
+.btn-primary:hover:not(:disabled) { background: rgba(212,168,75,0.14); border-color: var(--border-hi); color: var(--gold-bright); box-shadow: 0 0 24px rgba(212,168,75,0.12); }
 
-.btn-primary {
-  background: var(--gold-faint);
-  border-color: var(--border-mid);
-  color: var(--gold);
-  font-size: 10px;
-  letter-spacing: 0.25em;
-}
+.hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; cursor: pointer; }
+.hover-lift:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+.hover-gold:hover { color: var(--gold) !important; }
 
-.btn-primary:hover:not(:disabled) {
-  background: rgba(212,168,75,0.14);
-  border-color: var(--border-hi);
-  color: var(--gold-bright);
-  box-shadow: 0 0 24px rgba(212,168,75,0.12);
-}
+/* 5. ALL YOUR ANIMATIONS (Preserved!) */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideRight { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes filmReveal { from { opacity: 0; transform: scale(1.08); filter: blur(14px) brightness(1.4); } to { opacity: 1; transform: scale(1); filter: blur(0) brightness(1); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+@keyframes pulse-ring { 0% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+@keyframes float { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-20px) scale(1.02); } }
+@keyframes orb-drift { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -20px) scale(1.05); } 66% { transform: translate(-20px, 15px) scale(0.97); } }
+@keyframes grain-drift { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-1px, 1px); } 50% { transform: translate(1px, -1px); } 75% { transform: translate(-1px, -1px); } }
+@keyframes wave { 0%, 100% { transform: scaleY(0.5); opacity: 0.6; } 50% { transform: scaleY(1.4); opacity: 1; } }
+@keyframes typewriter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes scanline { from { transform: translateY(-100%); } to { transform: translateY(100vh); } }
+@keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 12px rgba(214,179,106,0.08), inset 0 0 20px rgba(214,179,106,0.02); } 50% { box-shadow: 0 0 32px rgba(214,179,106,0.18), inset 0 0 30px rgba(214,179,106,0.05); } }
 
-.hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  cursor: pointer;
-}
-.hover-lift:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-}
-
-/* 5. KEYFRAMES & ANIMATIONS */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes filmReveal {
-  from { opacity: 0; transform: scale(1.08); filter: blur(14px) brightness(1.4); }
-  to   { opacity: 1; transform: scale(1); filter: blur(0) brightness(1); }
-}
-
-@keyframes shimmer {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
-
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 12px rgba(214,179,106,0.08), inset 0 0 20px rgba(214,179,106,0.02); }
-  50% { box-shadow: 0 0 32px rgba(214,179,106,0.18), inset 0 0 30px rgba(214,179,106,0.05); }
-}
-
-/* Animation Utilities */
-.anim-fade-up { animation: fadeUp 0.55s cubic-bezier(0.4,0,0.2,1) forwards; }
-.anim-fade-in { animation: fadeIn 0.4s ease forwards; }
-.anim-film-reveal { animation: filmReveal 0.7s cubic-bezier(0.4,0,0.2,1) forwards; }
+.anim-fade-up { animation: fadeUp 0.55s cubic-bezier(0.4,0,0.2,1) both; }
+.anim-fade-in { animation: fadeIn 0.4s ease both; }
+.anim-slide-right { animation: slideRight 0.45s cubic-bezier(0.4,0,0.2,1) both; }
+.anim-film-reveal { animation: filmReveal 0.7s cubic-bezier(0.4,0,0.2,1) both; }
 .glow-pulse { animation: glow-pulse 3.5s ease-in-out infinite; }
+.delay-1 { animation-delay: 0.08s; } .delay-2 { animation-delay: 0.16s; } .delay-3 { animation-delay: 0.24s; }
+.delay-4 { animation-delay: 0.32s; } .delay-5 { animation-delay: 0.40s; } .delay-6 { animation-delay: 0.50s; }
+
+.page-enter { animation: fadeUp 0.4s cubic-bezier(0.4,0,0.2,1) both; }
 
 /* 6. VINTAGE KOLKATA THEME (The Magic!) */
 .vintage-workspace {
-  /* Override the generic dark mode variables with Shutter Green & Red Oxide */
   --bg-1: #111c16; 
   --bg-2: #1c3024; 
   --border: rgba(90, 38, 38, 0.6); 
@@ -182,7 +117,6 @@ body {
   position: relative;
   min-height: 100vh;
   
-  /* The breathing background image */
   background: 
     linear-gradient(to bottom right, rgba(17, 28, 22, 0.85), rgba(60, 20, 20, 0.85)),
     url('https://images.unsplash.com/photo-1518382410313-5cb78c66eeb4?q=80&w=2000&auto=format&fit=crop') center/cover;
@@ -195,7 +129,6 @@ body {
   100% { background-position: 100% 100%; background-size: 110%; }
 }
 
-/* Make the UI cards frosted glass so the background bleeds through */
 .vintage-workspace .card,
 .vintage-workspace .panel {
   background: rgba(28, 48, 36, 0.4) !important;
