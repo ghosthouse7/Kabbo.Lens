@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const BACKEND = 'https://kabbolens-production.up.railway.app';
+const BACKEND = 'http://localhost:8080';
 const STEPS = [
   'Authenticating with Miro…',
   'Drafting new canvas…',
@@ -39,6 +39,7 @@ export default function MiroWorkspace({ result }) {
       clearInterval(stepInterval);
     }
   };
+  
   return (
     <div style={{ margin: '0', padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'rgba(0,0,0,0.15)' }}>
       <div className="label" style={{ fontSize: '7px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
