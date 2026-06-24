@@ -233,7 +233,6 @@ kabbolens/
 
 <br/>
 
-**Built with love for Kolkata · Tradition Hacks 2026**
 
 <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=d4a847&height=80&section=footer"/>
 
